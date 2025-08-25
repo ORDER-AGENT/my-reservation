@@ -30,7 +30,7 @@ export default function ContentLayout({
       {/* ヘッダー */}
       {headerContent && (
         <div
-          className={`px-4 py-4 border-b border-gray-200 ${
+          className={`${
             isHeaderFixed
               ? 'sticky top-[var(--header-height)] z-10 bg-[var(--content-background)]/80 backdrop-blur-xl'
               : 'mb-4'
@@ -50,7 +50,7 @@ export default function ContentLayout({
       {/* フッター */}
       {footerContent && (
         <div
-          className={`mt-4 px-4 py-4 border-t border-gray-200 ${
+          className={`${
             isFooterFixed
               ? `sticky z-10 bg-[var(--content-background)]/80 backdrop-blur-xl ${
                   isMobile ? 'bottom-[var(--footer-menu-height)]' : 'bottom-0'
