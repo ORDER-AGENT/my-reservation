@@ -22,3 +22,22 @@ export default function useMediaQuery(query: string): boolean | null {
   return matches;
 }
 
+/**
+ * 画面サイズに関する状態を提供するカスタムフック。
+ *
+ * @returns {object} isLargeScreen, isSmallScreen, isMobile の真偽値（または初期化中はnull）を含むオブジェクト。
+ * - `isLargeScreen`: 画面幅が1024px以上の場合にtrue。
+ * - `isSmallScreen`: 画面幅が767px以下の場合にtrue。
+ * - `isMobile`: `isSmallScreen` のエイリアス。
+ */
+export function useScreenSize() {
+  const isLargeScreen = useMediaQuery('(min-width: 1024px)');
+  const isSmallScreen = useMediaQuery('(max-width: 767px)');
+
+  return {
+    isLargeScreen,
+    isSmallScreen,
+    isMobile: isSmallScreen,
+  };
+}
+

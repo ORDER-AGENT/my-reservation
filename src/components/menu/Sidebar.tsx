@@ -8,7 +8,7 @@ import { useSession, signOut } from 'next-auth/react';
 import SidebarContent from './SidebarContent';
 import SidebarHeader from './SidebarHeader';
 import { usePathname } from 'next/navigation';
-import useMediaQuery from '@/hooks/useMediaQuery';
+import { useScreenSize } from '@/hooks/useMediaQuery';
 import { getSidebarMenuItems } from '@/data/sidebarMenuItems';
 import { SidebarMenuItemType } from '@/types/sidebar';
 
@@ -23,7 +23,7 @@ export default function Sidebar({ onMenuToggleClick, isMenuOpen }: SidebarProps)
   const { status } = useSession(); // NextAuth.jsのセッション情報を取得
   const pathname = usePathname(); // 現在のパスを取得
   const [touchStartX, setTouchStartX] = useState(0); // スワイプ開始時のX座標を保持するステート
-  const isLargeScreen = useMediaQuery('(min-width: 1024px)');
+  const { isLargeScreen } = useScreenSize();
   const [isOverlayVisible, setIsOverlayVisible] = useState(false); // オーバーレイメニューの表示状態を制御する新しいステート
   
   // ログイン状態を判定

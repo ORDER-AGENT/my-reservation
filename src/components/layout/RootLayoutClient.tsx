@@ -1,33 +1,30 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
+import { SessionProvider } from 'next-auth/react';
+import { ConvexProvider, ConvexReactClient } from 'convex/react';
+import { ScreenSizeProvider, useScreenSizeContext } from '@/contexts/ScreenSizeContext';
 import Sidebar from '@/components/menu/Sidebar';
 import AppHeader from '@/components/layout/AppHeader';
 import { Toaster } from '@/components/ui/sonner';
-import { SessionProvider } from 'next-auth/react';
-import React, { useState, useEffect } from 'react';
-import useMediaQuery from '@/hooks/useMediaQuery';
 import FooterMenu from '@/components/menu/FooterMenu';
-import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import Cookies from 'js-cookie';
 
 const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL as string);
 
-// ルートレイアウトのクライアントコンポーネント
-export default function RootLayoutClient({
-  children,
-  initialIsMenuOpen, // サーバーから渡される初期状態
-}: {
+/**
+ * 実際のレイアウトとロジックを持つコンポーネント。
+ * Providerの内側で呼び出されるため、Contextを安全に使用できる。
+ */
+function MainLayout({ children, initialIsMenuOpen }: {
   children: React.ReactNode;
   initialIsMenuOpen: boolean;
 }) {
-  // サーバーから渡された初期値で状態を初期化
   const [isMenuOpen, setIsMenuOpen] = useState(initialIsMenuOpen);
-  const isLargeScreen = useMediaQuery('(min-width: 1024px)');
-  const isSmallScreen = useMediaQuery('(max-width: 767px)');
+  const { isLargeScreen, isMobile } = useScreenSizeContext(); // Contextから値を取得
 
   // 画面サイズが変更された時の追従処理
   useEffect(() => {
-    // isLargeScreenが未確定のうちは何もしない
     if (isLargeScreen === null) return;
 
     if (!isLargeScreen) {
@@ -51,42 +48,59 @@ export default function RootLayoutClient({
   };
 
   return (
-    <>
-      {/* NextAuth.jsのセッションプロバイダ */}
-      <SessionProvider>
-        <ConvexProvider client={convex}>
-          <div className="flex flex-col h-[100dvh]">
-            {/* ヘッダー部分をコンポーネントとしてレンダリング */}
-            <AppHeader onMenuToggleClick={handleMenuToggleClick} />
+    <div className="flex flex-col h-[100dvh]">
+      <div className="z-10">
+        <AppHeader onMenuToggleClick={handleMenuToggleClick} />
+      </div>
 
-            <div
-              className={`flex flex-grow pt-[var(--header-height)] ${
-                isSmallScreen ? 'pb-[var(--footer-menu-height)]' : ''
-              }`}
-            >
-              {/* サイドバーコンポーネント */}
-              <Sidebar
-                isMenuOpen={isMenuOpen}
-                onMenuToggleClick={handleMenuToggleClick}
-              />
-              {/* メインコンテンツ領域 */}
-              <main
-                className={`flex-grow overflow-auto transition-[margin-left] duration-[var(--sidebar-animation-duration)] ease-in-out ${
-                  isMenuOpen
-                    ? 'lg:ml-[var(--sidebar-width-open)] md:ml-[var(--sidebar-width-closed)]'
-                    : 'lg:ml-[var(--sidebar-width-closed)] md:ml-[var(--sidebar-width-closed)]'
-                }`}
-              >
-                {children}
-                {/* トースト通知表示エリア */}
-                <Toaster />
-              </main>
-            </div>
-          </div>
+      <div
+        className={`flex flex-grow pt-[var(--header-height)] ${
+          isMobile ? 'pb-[var(--footer-menu-height)]' : ''
+        }`}
+      >
+        {/* サイドバー */}
+        <Sidebar
+          isMenuOpen={isMenuOpen}
+          onMenuToggleClick={handleMenuToggleClick}
+        />
 
-          {isSmallScreen && <FooterMenu />}
-        </ConvexProvider>
-      </SessionProvider>
-    </>
+        {/* メインコンテンツ */}
+        <main
+          className={`flex-grow transition-[margin-left] duration-[var(--sidebar-animation-duration)] ease-in-out ${
+            isMenuOpen
+              ? 'lg:ml-[var(--sidebar-width-open)] md:ml-[var(--sidebar-width-closed)]'
+              : 'lg:ml-[var(--sidebar-width-closed)] md:ml-[var(--sidebar-width-closed)]'
+          }`}
+        >
+          {children}
+          <Toaster />
+        </main>
+      </div>
+      {isMobile && <FooterMenu />}
+    </div>
+  );
+}
+
+/**
+ * ルートレイアウトのクライアント側エントリポイント。
+ * 主に各種Providerを設定する責務を持つ。
+ */
+export default function RootLayoutClient({
+  children,
+  initialIsMenuOpen,
+}: {
+  children: React.ReactNode;
+  initialIsMenuOpen: boolean;
+}) {
+  return (
+    <SessionProvider>
+      <ConvexProvider client={convex}>
+        <ScreenSizeProvider>
+          <MainLayout initialIsMenuOpen={initialIsMenuOpen}>
+            {children}
+          </MainLayout>
+        </ScreenSizeProvider>
+      </ConvexProvider>
+    </SessionProvider>
   );
 } 

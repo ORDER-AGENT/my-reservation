@@ -87,6 +87,7 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   --primary-gradient: #ACA9FF;
+  --content-background: #f5f7fd;
 
   --sidebar-animation-duration: 300ms; /* サイドバーのアニメーション時間 */
 }
