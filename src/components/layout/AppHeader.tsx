@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import MenuToggleButton from '@/components/menu/MenuToggleButton';
-import Image from 'next/image';
 //import { useSession } from 'next-auth/react';
-import Link from 'next/link';
+import AppLogo from '@/components/AppLogo';
 
 interface AppHeaderProps {
   onMenuToggleClick: () => void;
@@ -67,18 +66,7 @@ export default function AppHeader({ onMenuToggleClick }: AppHeaderProps) {
       {/* 追加: ヘッダー左側にトグルボタンとロゴを配置 */}
       <div className="flex items-center flex-shrink-0 w-[250px]">
         <MenuToggleButton onClick={onMenuToggleClick} />
-        <Link href="/">
-          <div className="relative w-[60px] ml-0">
-            <Image
-              src="/logo.svg"
-              alt="Logo"
-              width={0}
-              height={0}
-              sizes="100%"
-              className="w-full h-auto"
-            />
-          </div>
-        </Link>
+        <AppLogo />
       </div>
 
       <h1 className="flex-grow m-0 pl-5 text-[1.2em]">{/*アプリケーションヘッダー*/}</h1>
