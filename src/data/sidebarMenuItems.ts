@@ -1,7 +1,7 @@
 import { FaFigma, FaGithub } from 'react-icons/fa';
 import { HiUsers } from 'react-icons/hi2';
 import { IoNotifications } from 'react-icons/io5';
-import { PiLockKeyOpenFill } from 'react-icons/pi';
+import { TiHome } from 'react-icons/ti';
 import { RiCalendarScheduleFill, RiDashboardHorizontalFill, RiSettings5Fill } from 'react-icons/ri';
 import { BsChatDotsFill } from 'react-icons/bs';
 import { SidebarMenuItemType } from '@/types/sidebar';
@@ -11,9 +11,9 @@ export const allMenuItems: SidebarMenuItemType[] = [
   {
     type: 'item',
     key: 'customer-dashboard',
-    icon: RiDashboardHorizontalFill,
-    text: 'トップページ',
-    path: '/customer',
+    icon: TiHome,
+    text: 'ホーム',
+    path: '/',
     displayInFooter: true,
     // roles: ['customer'],
   },
@@ -43,6 +43,10 @@ export const allMenuItems: SidebarMenuItemType[] = [
     path: '/customer/reviews',
     displayInFooter: true,
     // roles: ['customer'],
+  },
+  {
+    type: 'divider',
+    key: 'scope-divider',
   },
   // 店舗スタッフ・管理者向けメニュー
   {
