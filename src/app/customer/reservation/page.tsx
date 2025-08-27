@@ -25,8 +25,10 @@ export default function ReservationPage() {
   const [selectedMenus] = useAtom(selectedMenusAtom);
   const [totals] = useAtom(reservationTotalsAtom);
 
+  const canProceedToStaffSelection = selectedMenus.length > 0;
+
   const handleNextStep = () => {
-    if (selectedMenus.length > 0) {
+    if (canProceedToStaffSelection) {
       setStep('staff');
     }
   };
@@ -50,7 +52,12 @@ export default function ReservationPage() {
               合計: ¥{totals.price.toLocaleString()} / 約{totals.duration}分
             </p>
           </div>
-          <Button size="lg" onClick={handleNextStep}>
+          <Button
+            size="lg"
+            onClick={handleNextStep}
+            disabled={!canProceedToStaffSelection}
+            variant={canProceedToStaffSelection ? 'default' : 'outline'}
+          >
             スタッフ選択へ
           </Button>
         </div>
