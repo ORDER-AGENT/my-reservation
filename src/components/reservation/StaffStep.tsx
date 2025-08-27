@@ -1,28 +1,48 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAtom } from 'jotai';
-import { reservationStepAtom, selectedStaffAtom } from '@/atoms/reservation';
-import { Button } from '@/components/ui/button';
+import { selectedStaffAtom, selectedMenusAtom } from '@/atoms/reservation';
 import { staffList } from '@/mocks/data';
+import StaffCard from './StaffCard';
+import { useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function StaffStep() {
-  const [, setStep] = useAtom(reservationStepAtom);
   const [selectedStaff, setSelectedStaff] = useAtom(selectedStaffAtom);
+  const [selectedMenus] = useAtom(selectedMenusAtom);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (selectedMenus.length === 0) {
+      router.replace('/customer/reservation/menu');
+    }
+  }, [selectedMenus, router]);
+
+  if (selectedMenus.length === 0) {
+    return (
+      <div className="p-4">
+        <Skeleton className="h-8 w-3/4 mb-4" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center">
-        担当者を選択してください
-      </h1>
-      {/* スタッフ選択のUIをここに実装 */}
-      <div className="flex justify-between mt-8">
-        <Button variant="outline" onClick={() => setStep('menu')}>
-          前に戻る
-        </Button>
-        <Button onClick={() => setStep('datetime')} disabled={!selectedStaff}>
-          日時選択へ
-        </Button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+        {staffList.map((staff) => (
+          <StaffCard
+            key={staff.id}
+            staff={staff}
+            isSelected={selectedStaff?.id === staff.id}
+            onSelect={setSelectedStaff}
+          />
+        ))}
       </div>
     </div>
   );

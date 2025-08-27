@@ -1,8 +1,10 @@
 import { atom } from 'jotai';
-import type { ServiceMenu, Staff } from '@/mocks/data';
+import type { ServiceMenu, Staff } from '@/types/data';
 
-// 予約フローの現在のステップを管理するatom
-export const reservationStepAtom = atom<'menu' | 'staff' | 'datetime' | 'confirm'>('menu');
+export type ReservationTotals = {
+  price: number;
+  duration: number;
+};
 
 // 選択されたメニューを管理するatom
 export const selectedMenusAtom = atom<ServiceMenu[]>([]);
@@ -14,7 +16,7 @@ export const selectedStaffAtom = atom<Staff | null>(null);
 export const selectedDateTimeAtom = atom<Date | null>(null);
 
 // 合計金額と合計時間を計算する派生atom (derived atom)
-export const reservationTotalsAtom = atom((get) => {
+export const reservationTotalsAtom = atom<ReservationTotals>((get) => {
   const menus = get(selectedMenusAtom);
   return menus.reduce(
     (acc, menu) => {
