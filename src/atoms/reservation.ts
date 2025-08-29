@@ -15,6 +15,16 @@ export const selectedStaffAtom = atom<Staff | null>(null);
 // 選択された日時を管理するatom
 export const selectedDateTimeAtom = atom<Date | null>(null);
 
+// 予約状態をリセットするための書き込み専用atom
+export const resetReservationAtom = atom(
+  null, // 読み取りはしないのでnull
+  (get, set) => {
+    set(selectedMenusAtom, []);
+    set(selectedStaffAtom, null);
+    set(selectedDateTimeAtom, null);
+  }
+);
+
 // 合計金額と合計時間を計算する派生atom (derived atom)
 export const reservationTotalsAtom = atom<ReservationTotals>((get) => {
   const menus = get(selectedMenusAtom);
