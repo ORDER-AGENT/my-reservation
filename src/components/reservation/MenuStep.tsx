@@ -98,16 +98,16 @@ export default function MenuStep() {
       <Dialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>前回の予約内容の復元</DialogTitle>
+            <DialogTitle>前回の予約内容の確認</DialogTitle>
             <DialogDescription>
-              前回予約された内容が残っています。復元して予約を続けますか？
+              前回と同じ内容で予約を続けますか？
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={handleDismiss}>
-              復元しない
+              メニューから予約する
             </Button>
-            <Button onClick={handleRestore}>復元する</Button>
+            <Button onClick={handleRestore}>同じ内容で予約する</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
