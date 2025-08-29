@@ -1,7 +1,9 @@
 'use client';
 
 import {
+  hasCheckedForRestoreAtom,
   reservationTotalsAtom,
+  resetReservationAtom,
   selectedDateTimeAtom,
   selectedMenusAtom,
   selectedStaffAtom,
@@ -9,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import useLocalStorage from '@/hooks/useLocalStorage';
 import type { LastReservation } from '@/types/data';
-import { useAtomValue } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { useEffect, useState } from 'react';
 
 export default function DebugPage() {
@@ -21,6 +23,8 @@ export default function DebugPage() {
   const selectedStaff = useAtomValue(selectedStaffAtom);
   const selectedDateTime = useAtomValue(selectedDateTimeAtom);
   const reservationTotals = useAtomValue(reservationTotalsAtom);
+  const hasCheckedForRestore = useAtomValue(hasCheckedForRestoreAtom);
+  const resetAtoms = useSetAtom(resetReservationAtom);
 
   useEffect(() => {
     setReservation(getItem());
@@ -35,10 +39,19 @@ export default function DebugPage() {
     setReservation(getItem());
   };
 
+  const handleResetAtoms = () => {
+    resetAtoms();
+  };
+
   return (
     <div className="container mx-auto p-4 space-y-8">
       <div>
         <h1 className="text-2xl font-bold mb-4">Debug: Atom State</h1>
+        <div className="space-x-2 mb-4">
+          <Button variant="destructive" onClick={handleResetAtoms}>
+            Reset All Atoms
+          </Button>
+        </div>
         <div className="space-y-4">
           <div className="p-4 border rounded-md bg-gray-50">
             <h2 className="text-lg font-semibold">selectedMenus</h2>
@@ -62,6 +75,12 @@ export default function DebugPage() {
             <h2 className="text-lg font-semibold">reservationTotals</h2>
             <pre className="text-sm whitespace-pre-wrap break-all">
               {JSON.stringify(reservationTotals, null, 2)}
+            </pre>
+          </div>
+          <div className="p-4 border rounded-md bg-gray-50">
+            <h2 className="text-lg font-semibold">hasCheckedForRestore</h2>
+            <pre className="text-sm whitespace-pre-wrap break-all">
+              {JSON.stringify(hasCheckedForRestore, null, 2)}
             </pre>
           </div>
         </div>
