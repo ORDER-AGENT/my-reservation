@@ -1,9 +1,9 @@
-import { FaFigma, FaGithub } from 'react-icons/fa';
+import { FaGithub } from 'react-icons/fa';
 import { HiUsers } from 'react-icons/hi2';
-import { IoNotifications } from 'react-icons/io5';
+import { IoDocumentsSharp } from 'react-icons/io5';
 import { TiHome } from 'react-icons/ti';
 import { RiCalendarScheduleFill, RiDashboardHorizontalFill, RiSettings5Fill } from 'react-icons/ri';
-import { BsChatDotsFill } from 'react-icons/bs';
+//import { BsChatDotsFill } from 'react-icons/bs';
 import { SidebarMenuItemType } from '@/types/sidebar';
 
 export const allMenuItems: SidebarMenuItemType[] = [
@@ -107,6 +107,15 @@ export const allMenuItems: SidebarMenuItemType[] = [
     path: 'https://github.com/ORDER-AGENT/my-resavation',
     displayInFooter: false,
     isExternal: true,
+  },
+  {
+    type: 'item',
+    key: 'docs',
+    icon: IoDocumentsSharp, // docs に適したアイコンがないため仮で設定
+    text: 'ドキュメント',
+    path: '/docs',
+    displayInFooter: false,
+    isExternal: false,
   },
   {
     type: 'item',
