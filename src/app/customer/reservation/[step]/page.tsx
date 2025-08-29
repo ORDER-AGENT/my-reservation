@@ -17,6 +17,9 @@ import MenuStepHeader from '@/components/reservation/MenuStepHeader';
 import MenuStepFooter from '@/components/reservation/MenuStepFooter';
 import StaffStepHeader from '@/components/reservation/StaffStepHeader';
 import StaffStepFooter from '@/components/reservation/StaffStepFooter';
+import ConfirmHeader from '@/components/reservation/ConfirmHeader';
+import ConfirmFooter from '@/components/reservation/ConfirmFooter';
+import ConfirmStep from '@/components/reservation/ConfirmStep';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { use } from 'react';
@@ -41,6 +44,11 @@ export default function ReservationPage({ params }: ReservationPageProps) {
   const canProceedToStaffSelection = selectedMenus.length > 0;
   const canProceedToDateTimeSelection = !!selectedDateTime;
 
+  const handleConfirm = () => {
+    console.log('予約を確定しました！', { selectedMenus, totals, selectedStaff, selectedDateTime });
+    // TODO: 予約確定後の処理（API呼び出し、完了画面への遷移など）
+  };
+
   const renderHeader = () => {
     switch (step) {
       case 'menu':
@@ -50,11 +58,7 @@ export default function ReservationPage({ params }: ReservationPageProps) {
       case 'datetime':
         return <DateTimeStepHeader />; // 変更
       case 'confirm':
-        return (
-          <div className="p-2">
-            <h1 className="text-xl font-bold">予約内容を確認してください</h1>
-          </div>
-        );
+        return <ConfirmHeader />;
       default:
         // 未知のステップの場合、menu にリダイレクト
         router.replace('/customer/reservation/menu');
@@ -85,29 +89,14 @@ export default function ReservationPage({ params }: ReservationPageProps) {
               return (
                 <DateTimeStepFooter
                   canProceedToDateTimeSelection={canProceedToDateTimeSelection}
-                  router={router}
                 />
               ); // 変更
             case 'confirm':
               return (
-                <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 w-full">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-lg font-semibold">合計金額</h2>
-                      <p className="text-sm text-muted-foreground">
-                        ¥{totals.price.toLocaleString()}
-                      </p>
-                    </div>
-                    <Button
-                      size="lg"
-                      onClick={() => console.log('予約確定！')}
-                      disabled={true} // TODO: Implement confirmation logic
-                      variant={true ? 'outline' : 'default'} // TODO: Implement confirmation logic
-                    >
-                      予約を確定する
-                    </Button>
-                  </div>
-                </div>
+                <ConfirmFooter
+                  totals={totals}
+                  handleConfirm={handleConfirm}
+                />
               );
             default:
               return null;
@@ -126,8 +115,8 @@ export default function ReservationPage({ params }: ReservationPageProps) {
     >
       {step === 'menu' && <MenuStep />}
       {step === 'staff' && <StaffStep />}
-      {step === 'datetime' && <DateTimeStep />} {/* 変更 */}
-      {/* {step === 'confirm' && <ConfirmStep />} */}
+      {step === 'datetime' && <DateTimeStep />}
+      {step === 'confirm' && <ConfirmStep />}
     </ContentLayout>
   );
 }
