@@ -15,6 +15,9 @@ export const selectedStaffAtom = atom<Staff | null>(null);
 // 選択された日時を管理するatom
 export const selectedDateTimeAtom = atom<Date | null>(null);
 
+// 復元確認済みフラグを管理するatom
+export const hasCheckedForRestoreAtom = atom(false);
+
 // 予約状態をリセットするための書き込み専用atom
 export const resetReservationAtom = atom(
   null, // 読み取りはしないのでnull
@@ -22,6 +25,7 @@ export const resetReservationAtom = atom(
     set(selectedMenusAtom, []);
     set(selectedStaffAtom, null);
     set(selectedDateTimeAtom, null);
+    set(hasCheckedForRestoreAtom, false); // 復元確認フラグもリセット
   }
 );
 

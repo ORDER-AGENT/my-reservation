@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAtom } from 'jotai';
-import { selectedMenusAtom, selectedStaffAtom } from '@/atoms/reservation';
+import { hasCheckedForRestoreAtom, selectedMenusAtom, selectedStaffAtom } from '@/atoms/reservation';
 import { serviceMenus } from '@/mocks/data';
 import type { ServiceMenu, LastReservation } from '@/types/data';
 import {
@@ -25,11 +25,10 @@ export default function MenuStep() {
   const [lastReservation, setLastReservation] =
     useState<LastReservation | null>(null);
   const { getItem, removeItem } = useLocalStorage<LastReservation>('lastReservation');
-
+  const [hasCheckedForRestore, setHasCheckedForRestore] = useAtom(hasCheckedForRestoreAtom);
   useEffect(() => {
-    // すでに何らかのメニューが選択されている場合（＝予約フローの途中で戻ってきた場合）は、
-    // 復元ダイアログを表示しない
-    if (selectedMenus.length > 0) {
+    // すでに何らかのメニューが選択されている場合や、すでに復元を確認済みの場合は何もしない
+    if (selectedMenus.length > 0 || hasCheckedForRestore) {
       return;
     }
 
@@ -40,7 +39,9 @@ export default function MenuStep() {
         setShowRestoreDialog(true);
       }
     }
-  }, [selectedMenus.length, getItem]);
+    // これで、このeffectは実質的に一度しか実行されなくなる
+    setHasCheckedForRestore(true);
+  }, [selectedMenus.length, getItem, hasCheckedForRestore]);
 
   const handleRestore = () => {
     if (lastReservation) {
@@ -51,7 +52,7 @@ export default function MenuStep() {
   };
 
   const handleDismiss = () => {
-    removeItem();
+    //removeItem();
     setShowRestoreDialog(false);
   };
 
