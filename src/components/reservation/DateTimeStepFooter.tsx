@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'; // 追加
 
 interface DateTimeStepFooterProps {
   canProceedToDateTimeSelection: boolean;
-  // router: AppRouterInstance; // useRouter を直接使うため削除
 }
 
 export default function DateTimeStepFooter({
