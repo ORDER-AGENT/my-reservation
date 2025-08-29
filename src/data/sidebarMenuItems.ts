@@ -22,7 +22,7 @@ export const allMenuItems: SidebarMenuItemType[] = [
     key: 'customer-reservation',
     icon: RiCalendarScheduleFill,
     text: '予約',
-    path: '/customer/reservation',
+    path: '/customer/reservation/menu',
     displayInFooter: true,
     // roles: ['customer'],
   },
