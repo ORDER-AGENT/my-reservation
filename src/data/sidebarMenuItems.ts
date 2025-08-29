@@ -35,6 +35,7 @@ export const allMenuItems: SidebarMenuItemType[] = [
     displayInFooter: true,
     // roles: ['customer'],
   },
+  /*
   {
     type: 'item',
     key: 'customer-reviews',
@@ -43,7 +44,7 @@ export const allMenuItems: SidebarMenuItemType[] = [
     path: '/customer/reviews',
     displayInFooter: true,
     // roles: ['customer'],
-  },
+  },*/
   {
     type: 'divider',
     key: 'scope-divider',
