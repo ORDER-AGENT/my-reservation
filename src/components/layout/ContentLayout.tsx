@@ -23,7 +23,7 @@ export default function ContentLayout({
 }: ContentLayoutProps) {
   const { isMobile } = useScreenSizeContext(); // ContextからisMobileを取得
 
-  console.log('ContentLayout - isMobile:', isMobile);
+  //console.log('ContentLayout - isMobile:', isMobile);
 
   return (
     <div className="flex-1 flex flex-col bg-[var(--content-background)] min-w-0 h-full">
