@@ -5,10 +5,14 @@ import {
   selectedMenusAtom,
   reservationTotalsAtom,
   selectedStaffAtom,
-} from '@/atoms/reservation'; // reservationStepAtom は削除
+  selectedDateTimeAtom,
+} from '@/atoms/reservation';
 import ContentLayout from '@/components/layout/ContentLayout';
 import MenuStep from '@/components/reservation/MenuStep';
 import StaffStep from '@/components/reservation/StaffStep';
+import DateTimeStep from '@/components/reservation/DateTimeStep';
+import DateTimeStepHeader from '@/components/reservation/DateTimeStepHeader'; // 追加
+import DateTimeStepFooter from '@/components/reservation/DateTimeStepFooter'; // 追加
 import MenuStepHeader from '@/components/reservation/MenuStepHeader';
 import MenuStepFooter from '@/components/reservation/MenuStepFooter';
 import StaffStepHeader from '@/components/reservation/StaffStepHeader';
@@ -32,9 +36,10 @@ export default function ReservationPage({ params }: ReservationPageProps) {
   const [selectedMenus] = useAtom(selectedMenusAtom);
   const [totals] = useAtom(reservationTotalsAtom);
   const [selectedStaff] = useAtom(selectedStaffAtom);
+  const [selectedDateTime] = useAtom(selectedDateTimeAtom);
 
   const canProceedToStaffSelection = selectedMenus.length > 0;
-  const canProceedToDateTimeSelection = !!selectedStaff;
+  const canProceedToDateTimeSelection = !!selectedDateTime;
 
   const renderHeader = () => {
     switch (step) {
@@ -43,11 +48,7 @@ export default function ReservationPage({ params }: ReservationPageProps) {
       case 'staff':
         return <StaffStepHeader />;
       case 'datetime':
-        return (
-          <div className="p-2">
-            <h1 className="text-xl font-bold">日時を選択してください</h1>
-          </div>
-        );
+        return <DateTimeStepHeader />; // 変更
       case 'confirm':
         return (
           <div className="p-2">
@@ -70,41 +71,23 @@ export default function ReservationPage({ params }: ReservationPageProps) {
               return (
                 <MenuStepFooter
                   canProceedToStaffSelection={canProceedToStaffSelection}
-                  handleNextStep={() => router.push('/customer/reservation/staff')} // router.push に変更
+                  handleNextStep={() => router.push('/customer/reservation/staff')}
                   totals={totals}
                 />
               );
             case 'staff':
               return (
                 <StaffStepFooter
-                  // setStep は不要になるため削除
                   selectedStaff={selectedStaff}
                 />
               );
             case 'datetime':
               return (
-                <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 w-full">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-lg font-semibold">選択中の日時</h2>
-                      <p className="text-sm text-muted-foreground">
-                        {/* TODO: Display selected datetime */}
-                        未選択
-                      </p>
-                    </div>
-                    <Button
-                      size="lg"
-                      onClick={() => router.push('/customer/reservation/confirm')} // router.push に変更
-                      disabled={true} // TODO: Implement datetime selection logic
-                      variant={
-                        true ? 'outline' : 'default'
-                      } // TODO: Implement datetime selection logic
-                    >
-                      予約内容確認へ
-                    </Button>
-                  </div>
-                </div>
-              );
+                <DateTimeStepFooter
+                  canProceedToDateTimeSelection={canProceedToDateTimeSelection}
+                  router={router}
+                />
+              ); // 変更
             case 'confirm':
               return (
                 <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 w-full">
@@ -143,7 +126,7 @@ export default function ReservationPage({ params }: ReservationPageProps) {
     >
       {step === 'menu' && <MenuStep />}
       {step === 'staff' && <StaffStep />}
-      {/* {step === 'datetime' && <DateTimeStep />} */}
+      {step === 'datetime' && <DateTimeStep />} {/* 変更 */}
       {/* {step === 'confirm' && <ConfirmStep />} */}
     </ContentLayout>
   );
