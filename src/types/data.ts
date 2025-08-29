@@ -8,9 +8,9 @@ export type ServiceMenu = {
 };
 
 export type Staff = {
-  id: number;
+  id: string;
   name: string;
-  avatar: string;
+  avatarUrl: string;
 };
 
 export type LastReservation = {
