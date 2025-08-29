@@ -20,6 +20,7 @@ import StaffStepFooter from '@/components/reservation/StaffStepFooter';
 import ConfirmHeader from '@/components/reservation/ConfirmHeader';
 import ConfirmFooter from '@/components/reservation/ConfirmFooter';
 import ConfirmStep from '@/components/reservation/ConfirmStep';
+import CompleteStep from '@/components/reservation/CompleteStep';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { use } from 'react';
@@ -46,7 +47,8 @@ export default function ReservationPage({ params }: ReservationPageProps) {
 
   const handleConfirm = () => {
     console.log('予約を確定しました！', { selectedMenus, totals, selectedStaff, selectedDateTime });
-    // TODO: 予約確定後の処理（API呼び出し、完了画面への遷移など）
+    // TODO: 予約確定後の処理（API呼び出しなど）
+    router.push('/customer/reservation/complete'); // 完了画面へ遷移
   };
 
   const renderHeader = () => {
@@ -59,6 +61,8 @@ export default function ReservationPage({ params }: ReservationPageProps) {
         return <DateTimeStepHeader />; // 変更
       case 'confirm':
         return <ConfirmHeader />;
+      case 'complete':
+        return <div className="p-2"><h1 className="text-xl font-bold">予約完了</h1></div>; // 仮のヘッダー
       default:
         // 未知のステップの場合、menu にリダイレクト
         router.replace('/customer/reservation/menu');
@@ -98,6 +102,8 @@ export default function ReservationPage({ params }: ReservationPageProps) {
                   handleConfirm={handleConfirm}
                 />
               );
+            case 'complete':
+              return null; // 完了画面ではフッターは不要
             default:
               return null;
           }
@@ -117,6 +123,7 @@ export default function ReservationPage({ params }: ReservationPageProps) {
       {step === 'staff' && <StaffStep />}
       {step === 'datetime' && <DateTimeStep />}
       {step === 'confirm' && <ConfirmStep />}
+      {step === 'complete' && <CompleteStep />}
     </ContentLayout>
   );
 }
