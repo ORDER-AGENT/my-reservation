@@ -12,17 +12,17 @@ import type { Staff } from '@/types/data';
 interface StaffCardProps {
   staff: Staff;
   isSelected: boolean;
-  onSelect: (staff: Staff) => void;
+  onToggle: (staff: Staff) => void;
 }
 
-export default function StaffCard({ staff, isSelected, onSelect }: StaffCardProps) {
+export default function StaffCard({ staff, isSelected, onToggle: onToggle }: StaffCardProps) {
   return (
     <Card
       key={staff.id}
       className={`cursor-pointer hover:shadow-lg transition-shadow ${
         isSelected ? 'border-primary ring-2 ring-primary' : ''
       }`}
-      onClick={() => onSelect(staff)}
+      onClick={() => onToggle(staff)}
     >
       <CardHeader>
         <CardTitle>{staff.name}</CardTitle>

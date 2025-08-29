@@ -7,6 +7,7 @@ import { staffList } from '@/mocks/data';
 import StaffCard from './StaffCard';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { Staff } from '@/types/data';
 
 export default function StaffStep() {
   const [selectedStaff, setSelectedStaff] = useAtom(selectedStaffAtom);
@@ -18,6 +19,10 @@ export default function StaffStep() {
       router.replace('/customer/reservation/menu');
     }
   }, [selectedMenus, router]);
+
+  const handleToggleStaff = (staff: Staff) => {
+    setSelectedStaff((current) => (current?.id === staff.id ? null : staff));
+  };
 
   if (selectedMenus.length === 0) {
     return (
@@ -40,7 +45,7 @@ export default function StaffStep() {
             key={staff.id}
             staff={staff}
             isSelected={selectedStaff?.id === staff.id}
-            onSelect={setSelectedStaff}
+            onToggle={handleToggleStaff}
           />
         ))}
       </div>
