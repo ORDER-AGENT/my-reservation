@@ -107,6 +107,14 @@ export const allMenuItems: SidebarMenuItemType[] = [
     displayInFooter: false,
     isExternal: true,
   },
+  {
+    type: 'item',
+    key: 'debug-page',
+    icon: RiSettings5Fill,
+    text: 'Debug',
+    path: '/debug',
+    displayInFooter: false,
+  },
 ];
 
 export const getSidebarMenuItems = (userRoles: string[]): SidebarMenuItemType[] => {
