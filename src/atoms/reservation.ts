@@ -25,7 +25,7 @@ export const resetReservationAtom = atom(
     set(selectedMenusAtom, []);
     set(selectedStaffAtom, null);
     set(selectedDateTimeAtom, null);
-    set(hasCheckedForRestoreAtom, false); // 復元確認フラグもリセット
+    set(hasCheckedForRestoreAtom, false);
   }
 );
 
