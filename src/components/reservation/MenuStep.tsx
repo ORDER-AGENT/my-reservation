@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useAtom } from 'jotai';
 import { selectedMenusAtom, selectedStaffAtom } from '@/atoms/reservation';
 import { serviceMenus } from '@/mocks/data';
-import type { ServiceMenu, Staff } from '@/types/data';
+import type { ServiceMenu, LastReservation } from '@/types/data';
 import {
   Dialog,
   DialogContent,
@@ -15,13 +15,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
+import useLocalStorage from '@/hooks/useLocalStorage';
 import ServiceMenuCard from './ServiceMenuCard';
-
-type LastReservation = {
-  menus: ServiceMenu[];
-  staff: Staff | null;
-  timestamp: string;
-};
 
 export default function MenuStep() {
   const [selectedMenus, setSelectedMenus] = useAtom(selectedMenusAtom);
@@ -29,6 +24,7 @@ export default function MenuStep() {
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const [lastReservation, setLastReservation] =
     useState<LastReservation | null>(null);
+  const { getItem, removeItem } = useLocalStorage<LastReservation>('lastReservation');
 
   useEffect(() => {
     // すでに何らかのメニューが選択されている場合（＝予約フローの途中で戻ってきた場合）は、
@@ -37,23 +33,14 @@ export default function MenuStep() {
       return;
     }
 
-    const storedState = localStorage.getItem('lastReservation');
+    const storedState = getItem();
     if (storedState) {
-      try {
-        const parsedState: LastReservation = JSON.parse(storedState);
-        if (
-          parsedState.menus?.length > 0 ||
-          parsedState.staff
-        ) {
-          setLastReservation(parsedState);
-          setShowRestoreDialog(true);
-        }
-      } catch (error) {
-        console.error('Failed to parse last reservation state from localStorage', error);
-        localStorage.removeItem('lastReservation');
+      if (storedState.menus?.length > 0 || storedState.staff) {
+        setLastReservation(storedState);
+        setShowRestoreDialog(true);
       }
     }
-  }, []);
+  }, [selectedMenus.length, getItem]);
 
   const handleRestore = () => {
     if (lastReservation) {
@@ -64,7 +51,7 @@ export default function MenuStep() {
   };
 
   const handleDismiss = () => {
-    localStorage.removeItem('lastReservation');
+    removeItem();
     setShowRestoreDialog(false);
   };
 

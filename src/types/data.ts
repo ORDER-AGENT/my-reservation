@@ -8,7 +8,13 @@ export type ServiceMenu = {
 };
 
 export type Staff = {
-  id: string;
+  id: number;
   name: string;
-  avatarUrl?: string;
+  avatar: string;
+};
+
+export type LastReservation = {
+  menus: ServiceMenu[];
+  staff: Staff | null;
+  timestamp: string;
 };
