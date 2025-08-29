@@ -3,10 +3,14 @@
 import { Calendar } from '@/components/ui/calendar';
 import { useEffect, useState } from 'react';
 import { useAtom } from 'jotai';
-import { selectedDateTimeAtom } from '@/atoms/reservation';
+import { selectedDateTimeAtom, selectedStaffAtom, selectedMenusAtom } from '@/atoms/reservation';
+import { useRouter } from 'next/navigation';
 
 export default function DateTimeStep() {
   const [selectedDateTime, setSelectedDateTime] = useAtom(selectedDateTimeAtom);
+  const [selectedStaff] = useAtom(selectedStaffAtom);
+  const [selectedMenus] = useAtom(selectedMenusAtom);
+  const router = useRouter();
 
   const [date, setDate] = useState<Date | undefined>(selectedDateTime ? new Date(selectedDateTime) : undefined);
   const [selectedTime, setSelectedTime] = useState<string | undefined>(
@@ -14,6 +18,17 @@ export default function DateTimeStep() {
   );
 
   useEffect(() => {
+    // メニューが選択されていない場合、メニュー選択画面にリダイレクト
+    if (selectedMenus.length === 0) {
+      router.replace('/customer/reservation/menu');
+      return; // リダイレクトしたら以降の処理は不要
+    }
+    // スタッフが選択されていない場合、スタッフ選択画面にリダイレクト
+    if (!selectedStaff) {
+      router.replace('/customer/reservation/staff');
+      return; // リダイレクトしたら以降の処理は不要
+    }
+    // 既存のselectedDateTimeのロジック
     if (selectedDateTime) {
       setDate(new Date(selectedDateTime));
       setSelectedTime(`${selectedDateTime.getHours().toString().padStart(2, '0')}:${selectedDateTime.getMinutes().toString().padStart(2, '0')}`);
@@ -21,7 +36,7 @@ export default function DateTimeStep() {
       setDate(undefined);
       setSelectedTime(undefined);
     }
-  }, [selectedDateTime]);
+  }, [selectedDateTime, selectedStaff, selectedMenus, router]);
 
   // 仮の時間帯リスト
   const timeSlots = [
