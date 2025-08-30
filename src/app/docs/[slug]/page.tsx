@@ -4,6 +4,7 @@ import { bundleMDX } from 'mdx-bundler';
 import { getMDXComponent } from 'mdx-bundler/client';
 import React from 'react';
 import remarkGfm from 'remark-gfm';
+import MermaidBlock from '@/components/docs/MermaidBlock';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -25,9 +26,6 @@ export default async function DocPage({ params }: Props) {
   const source = fs.readFileSync(filePath, 'utf-8');
 
   // MDX をバンドル
-  //const { code } = await bundleMDX({ source });
-
-  // remark-gfm を使用
   const { code } = await bundleMDX({
     source,
     mdxOptions(options) {
@@ -35,12 +33,11 @@ export default async function DocPage({ params }: Props) {
       return options;
     },
   });
-  //const Component = new Function('React', `${code}; return MDXContent`)(React);
   const Component = getMDXComponent(code);
 
   return (
     <article className="prose p-4">
-      <Component />
+      <Component components={{ MermaidBlock }} />
     </article>
   );
 }
