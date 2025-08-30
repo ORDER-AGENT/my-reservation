@@ -1,0 +1,186 @@
+---
+slug: detailed-design
+title: 詳細設計書
+---
+
+## 詳細設計書
+
+## 1. プロジェクト構造
+
+- `src/app/`: Next.jsのApp Router。各ページのコンポーネントやレイアウトを配置。
+- `src/components/`: 再利用可能なReactコンポーネント。
+  - `ui/`: shadcn/uiから導入した基本コンポーネント。
+  - `layout/`: ヘッダーやメニュー以外のレイアウト関連コンポーネント。
+  - `menu/`: サイドバーやフッターメニューなどのメニュー関連コンポーネント。
+  - `reservation/`: 予約フローの各ステップに対応するコンポーネント。
+- `src/atoms/`: Jotaiのatom定義。
+- `src/hooks/`: カスタムフック。
+- `convex/`: Convexのスキーマ定義、Query、Mutation、Actionを配置。
+- `docs/`: プロジェクトのドキュメント（要件定義、設計書など）。
+
+## 2. 主要機能詳細
+
+### 2.1. 前回の予約内容の再利用機能
+
+リピート顧客の予約体験を簡略化するための機能。
+
+**トリガー**:
+- 認証済みユーザーが予約の最初のステップ (`/customer/reservation/menu`) にアクセスした際に実行。
+
+**Convex**:
+- `convex/reservations.ts` に新しいクエリを追加する。
+  - `getLastByUser`: 認証ユーザーの`userId`を引数に取り、`reservations`テーブルから最新の予約情報を1件取得する。`creationTime`で降順ソートし、`.first()`で取得する。
+- （データ検証のため、現在の全メニュー・全スタッフを取得するクエリも必要）
+  - `api.menus.list`
+  - `api.staffs.list`
+
+**状態管理 (Jotai)**:
+- `src/atoms/reservation.ts` の `reservationAtom` を利用する。
+- ユーザーが「再利用する」を選択した場合、取得した前回の予約情報（`serviceId`, `staffId`など）で `reservationAtom` の状態を `set` 関数を用いて更新する。
+
+**コンポーネント実装**:
+- `src/app/customer/reservation/menu/page.tsx` 内で、`useQuery` を用いて以下のデータを並行して取得する。
+  - `api.reservations.getLastByUser`: 前回の予約情報
+  - `api.menus.list`: 現在の全メニューリスト
+  - `api.staffs.list`: 現在の全スタッフリスト
+- 前回の予約情報が存在する場合、その内容（`serviceId`, `staffId`）が現在のメニューリストおよびスタッフリストに存在するかを検証する。
+- **検証結果が有効な場合**:
+  - `shadcn/ui` の `Dialog` コンポーネントを利用してユーザーに選択を促すUIを表示する。
+    - `Title`: 「前回の予約内容の確認」
+    - `Description`: 「前回と同じ内容で予約を続けますか？  
+    メニュー: serviceName, 担当: staffName」
+  - UI内に「同じ内容で予約する」ボタンと「メニューから予約する」ボタンを配置する。
+  - 「同じ内容で予約する」ボタンがクリックされたら、`reservationAtom`を更新し、`useRouter` を使って `/customer/reservation/datetime` へ遷移させる。
+- **検証結果が無効な場合（メニュー or スタッフが存在しない）**:
+  - 再利用の選択肢は表示せず、代わりに「前回の予約内容（メニューまたは担当スタッフ）が現在ご利用いただけないため、新しく予約を選択してください。」といった案内メッセージを`Alert`コンポーネントで表示する。
+
+### 2.2. 認証フロー詳細
+
+認証は `NextAuth.js` と `Convex` を連携させて実現する。
+
+**ライブラリ**:
+- `next-auth`: 認証処理の中核。
+- `@auth/convex-adapter`: NextAuth.js と Convex をつなぐアダプター。
+
+**処理シーケンス**:
+
+1.  **フロントエンド**: ユーザーが `next-auth/react` の `signIn('google')` 関数を呼び出すUI（例: ボタン）をクリックする。
+2.  **NextAuth.js**: Googleの認証画面へリダイレクトし、認証後のコールバックでユーザーのプロフィール情報とトークンを受け取る。
+3.  **Convex Adapter**: NextAuth.js の `events` コールバック（特に `signIn`）を利用する。
+    - `convex/http.ts` で `HttpRouter` を設定し、NextAuth.jsからのリクエストを処理するエンドポイントを作成する。
+4.  **Convex Mutation**:
+    - `convex/auth.ts` (仮) に `storeUser` のようなMutationを定義する。
+    - このMutationは、NextAuth.jsから受け取った `tokenIdentifier` を基に `users` テーブルを検索する。
+    - `tokenIdentifier` に一致するユーザーが存在しない場合、新しいユーザー情報を `users` テーブルに挿入する。
+5.  **Convex Identity**:
+    - `convex/auth.config.ts` で認証プロバイダ情報（ドメイン、アプリケーションID）を設定する。
+    - `convex/identity.ts` (仮) で `auth.getUserIdentity()` を使用して、Convexの各処理（Query/Mutation）内で認証済みユーザーの情報を取得できるようにする。
+
+### 2.3. 管理者・スタッフ向け機能
+
+#### 2.3.1. スケジュール管理機能
+
+スタッフが自身の勤務スケジュールを管理するための機能。
+
+**Convex Mutation (`convex/schedules.ts`):**
+- `createOrUpdateSchedule` というMutationを定義。
+- **責務**:
+  - 実行ユーザーの認証状態と権限（`staff` or `admin`）を検証する。
+  - 引数で受け取った日付 (`date`) を基に、該当スタッフ (`staffId`) のスケジュールを検索する。
+  - 既存データがあれば `patch`、なければ `insert` を行い、勤務スケジュールをDBに保存する。
+
+**フロントエンド実装（予定）:**
+- **UIコンポーネント**:
+  - `src/components/admin/ScheduleForm.tsx` を作成。
+  - `shadcn/ui` の `Calendar` や `Input` を利用し、スタッフが日付、勤務開始・終了時間、休憩時間を入力できるフォームを実装する。
+  - `useMutation` フックで `createOrUpdateSchedule` を呼び出し、フォームの送信を処理する。
+- **ページ**:
+  - `src/app/admin/schedule/page.tsx` を作成。
+  - 上記の `ScheduleForm` コンポーネントを配置し、スタッフ向けのスケジュール管理ページとして提供する。
+
+
+## 3. フロントエンド設計
+
+### 3.1. 主要レイアウトコンポーネント
+
+アプリケーションの骨格となるレイアウトは、以下のコンポーネントで構成される。
+
+- **`src/components/layout/RootLayoutClient.tsx`**:
+    - `<body>` タグ直下に配置されるクライアントコンポーネント。
+    - `Sidebar` の開閉状態など、レイアウトに関するグローバルな状態を管理する。
+- **`src/components/layout/AppHeader.tsx`**:
+    - ページ上部に表示されるヘッダー。
+    - アプリケーションロゴ (`AppLogo.tsx`) と、モバイル表示時にサイドバーを開閉するための `MenuToggleButton.tsx` を含む。
+- **`src/components/layout/Sidebar.tsx`**:
+    - ナビゲーションメニューを表示するサイドバー。
+    - `SidebarHeader.tsx` とメニュー項目 (`SidebarMenuItem.tsx`) を含む `SidebarContent.tsx` で構成される。
+- **`src/components/layout/ContentLayout.tsx`**:
+    - `children` を受け取り、メインコンテンツを表示するラッパーコンポーネント。
+    - ヘッダーやサイドバーを除いたコンテンツエリアのスタイリング（余白など）を定義する。
+
+### 3.2. レスポンシブ対応
+
+- `src/hooks/useMediaQuery.ts` カスタムフックを利用して、CSSのメディアクエリの結果をコンポーネント内で取得する。
+- これにより、`isMobile` のような真偽値に基づいて、コンポーネントのレンダリングや振る舞いをTypeScriptコード内で動的に切り替えることが可能になる。
+
+### 3.3. モバイル向けフッターメニュー
+
+- **`src/components/menu/FooterMenu.tsx`**:
+    - モバイルデバイス（画面幅が`md`ブレークポイント未満）でのみ表示されるフッターナビゲーションバー。
+    - `position: fixed` で画面下部に常に表示される。
+    - `src/data/sidebarMenuItems.ts` からメニュー項目を取得し、そのうち `displayInFooter: true` のフラグを持つ項目のみをアイコンとテキスト付きで表示する。
+    - `useSession` フックを用いてユーザーの認証状態を判定し、ログイン状態に応じて表示するメニューを切り替える。
+    - `usePathname` フックで現在のURLパスを取得し、対応するメニュー項目をハイライト表示することで、ユーザーが現在どのページにいるかを視覚的に示す。
+
+## 4. APIエンドポイント設計 (Next.js Route Handlers)
+
+本アプリケーションでは、サーバーサイドのロジックとデータ永続化にConvexを採用しています。これにより、クライアントはNext.jsのAPIエンドポイントを介さずに、型安全なRPC（Remote Procedure Call）を通じて直接ConvexのQuery（データ取得）およびMutation（データ更新）を呼び出します。
+
+このアーキテクチャのため、アプリケーション固有のカスタムAPIエンドポイントは基本的に不要です。ただし、フレームワークが規約として利用するエンドポイントが1つ存在します。
+
+### 4.1. 認証エンドポイント
+
+- **エンドポイント**: `/api/auth/[...nextauth]`
+- **ファイル**: `src/app/api/auth/[...nextauth]/route.ts`
+- **責務**:
+    - `NextAuth.js` ライブラリによって管理される包括的な認証エンドポイント。
+    - Googleアカウントによるサインイン、サインアウト、セッション状態の確認など、すべての認証フローを処理します。
+    - 内部で `@auth/convex-adapter` と連携し、認証されたユーザーの情報をConvexデータベースに永続化します。
+
+### 4.2. 将来的な拡張
+
+将来的に外部サービス（例: メール送信サービスからの通知など）からのWebhookを受け取る必要が生じた場合は、Convexが提供する[HTTPアクション](https://docs.convex.dev/functions/http-actions)を用いて、`convex/http.ts`ファイル内に専用のエンドポイントを定義する方針です。
+
+
+
+## 5. 状態管理設計
+
+### 5.1. サーバー状態 (TanStack Query)
+
+ConvexのQuery/Mutationと連携して、サーバーから取得したデータのキャッシュ、更新、無効化を管理する。
+
+**例: スタッフ一覧の取得**
+- `queryKey`: `['staffs']`
+- `queryFn`: `() => ctx.convex.query(api.staffs.list)`
+- **利用箇所**: スタッフ選択画面 (`/customer/reservation/staff`) で `useQuery` を使用してデータを取得する。
+
+**例: 予約の作成**
+- `useMutation` を使用して予約作成処理を実装する。
+- `mutationFn`: `(newReservation) => ctx.convex.mutation(api.reservations.create, newReservation)`
+- `onSuccess`: 予約リスト (`['reservations', userId]`) や、予約可能時間枠 (`['availableSlots', ...]` )など、関連するクエリを `queryClient.invalidateQueries` を使して無効化し、UIを最新の状態に更新する。
+
+### 5.2. クライアント状態 (Jotai)
+
+複数のコンポーネント間で共有する必要がある、UIに関する状態などを管理する。
+
+#### 5.2.1. 予約フローの状態
+
+予約フロー全体の状態は、以下の `atom` で管理する。
+
+- **ファイル**: `src/atoms/reservation.ts`
+- **主要なAtom**:
+  - `selectedMenusAtom`: 顧客が選択した施術メニュー (`ServiceMenu[]`)
+  - `selectedStaffAtom`: 顧客が指名したスタッフ (`Staff | null`)
+  - `selectedDateTimeAtom`: 顧客が選択した予約日時 (`Date | null`)
+  - `reservationTotalsAtom` (派生): 合計料金と合計所要時間 (`ReservationTotals`)
+  - `resetReservationAtom` (書き込み専用): 全ての予約関連atomを初期状態にリセットする。
