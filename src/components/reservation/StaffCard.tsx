@@ -1,11 +1,10 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import type { Staff } from '@/types/data';
 
@@ -15,22 +14,30 @@ interface StaffCardProps {
   onToggle: (staff: Staff) => void;
 }
 
-export default function StaffCard({ staff, isSelected, onToggle: onToggle }: StaffCardProps) {
+export default function StaffCard({ staff, isSelected, onToggle }: StaffCardProps) {
   return (
     <Card
       key={staff.id}
-      className={`cursor-pointer hover:shadow-lg transition-shadow ${
-        isSelected ? 'border-primary ring-2 ring-primary' : ''
+      className={`gap-1 py-3 cursor-pointer transition-all ${
+        isSelected ? 'ring-2 ring-primary' : ''
       }`}
       onClick={() => onToggle(staff)}
     >
-      <CardHeader>
-        <CardTitle>{staff.name}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {staff.avatarUrl && (
-          <img src={staff.avatarUrl} alt={staff.name} className="w-16 h-16 rounded-full mx-auto mb-2" />
-        )}
+      <CardContent className="flex flex-row gap-4 items-center">
+        <div className="relative w-16 h-16 flex-shrink-0">
+          {staff.avatarUrl && (
+            <Image
+              src={staff.avatarUrl}
+              alt={staff.name}
+              layout="fill"
+              objectFit="cover"
+              className="rounded-full"
+            />
+          )}
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold">{staff.name}</h3>
+        </div>
       </CardContent>
     </Card>
   );

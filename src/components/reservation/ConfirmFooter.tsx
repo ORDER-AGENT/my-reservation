@@ -24,14 +24,13 @@ export default function ConfirmFooter({ totals, handleConfirm }: ConfirmFooterPr
           </Button>
         </div>
         <div className="flex-grow text-center">
-          <h2 className="text-lg font-semibold">合計金額</h2>
+          <h2 className="md:text-lg font-semibold">合計金額</h2>
           <p className="text-sm text-muted-foreground">
             ¥{totals.price.toLocaleString()}
           </p>
         </div>
         <div>
           <Button
-            size="lg"
             onClick={handleConfirm}
             // disabled={true} // TODO: Implement confirmation logic
             // variant={true ? 'outline' : 'default'} // TODO: Implement confirmation logic

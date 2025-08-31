@@ -18,11 +18,11 @@ export default function DateTimeStepFooter({
       <div className="flex items-center justify-between">
         <div>
           <Button variant="outline" onClick={() => router.back()}>
-            前に戻る
+            戻る
           </Button>
         </div>
         <div className="flex-grow text-center"> {/* 変更 */}
-          <h2 className="text-lg font-semibold">選択中の日時</h2>
+          <h2 className="md:text-lg font-semibold">選択中の日時</h2>
           <p className="text-sm text-muted-foreground">
             {selectedDateTime
               ? selectedDateTime.toLocaleString('ja-JP', {
@@ -37,7 +37,6 @@ export default function DateTimeStepFooter({
         </div>
         <div>
           <Button
-            size="lg"
             onClick={() => router.push('/customer/reservation/confirm')}
             disabled={!canProceedToDateTimeSelection}
             variant={canProceedToDateTimeSelection ? 'default' : 'outline'}

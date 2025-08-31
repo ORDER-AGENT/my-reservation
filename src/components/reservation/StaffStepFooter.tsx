@@ -19,18 +19,17 @@ export default function StaffStepFooter({
       <div className="flex items-center justify-between">
         <div>
           <Button variant="outline" onClick={() => router.back()}>
-            前に戻る
+            戻る
           </Button>
         </div>
         <div className="flex-grow text-center">
-          <h2 className="text-lg font-semibold">選択中のスタッフ</h2>
+          <h2 className="md:text-lg font-semibold">選択中のスタッフ</h2>
           <p className="text-sm text-muted-foreground">
             {selectedStaff ? selectedStaff.name : '未選択'}
           </p>
         </div>
         <div>
           <Button
-            size="lg"
             onClick={() => router.push('/customer/reservation/datetime')}
             disabled={!selectedStaff}
           >
