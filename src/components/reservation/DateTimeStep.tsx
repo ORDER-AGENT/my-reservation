@@ -1,21 +1,18 @@
 'use client';
 
-import { Calendar } from '@/components/ui/calendar';
 import { useEffect, useState } from 'react';
 import { useAtom } from 'jotai';
 import { selectedDateTimeAtom, selectedStaffAtom, selectedMenusAtom } from '@/atoms/reservation';
 import { useRouter } from 'next/navigation';
+import React from 'react';
+import { Button } from '@/components/ui/button';
 
 export default function DateTimeStep() {
   const [selectedDateTime, setSelectedDateTime] = useAtom(selectedDateTimeAtom);
   const [selectedStaff] = useAtom(selectedStaffAtom);
   const [selectedMenus] = useAtom(selectedMenusAtom);
   const router = useRouter();
-
-  const [date, setDate] = useState<Date | undefined>(selectedDateTime ? new Date(selectedDateTime) : undefined);
-  const [selectedTime, setSelectedTime] = useState<string | undefined>(
-    selectedDateTime ? `${selectedDateTime.getHours().toString().padStart(2, '0')}:${selectedDateTime.getMinutes().toString().padStart(2, '0')}` : undefined
-  );
+  const [weekOffset, setWeekOffset] = useState(0);
 
   useEffect(() => {
     // メニューが選択されていない場合、メニュー選択画面にリダイレクト
@@ -28,15 +25,7 @@ export default function DateTimeStep() {
       router.replace('/customer/reservation/staff');
       return; // リダイレクトしたら以降の処理は不要
     }
-    // 既存のselectedDateTimeのロジック
-    if (selectedDateTime) {
-      setDate(new Date(selectedDateTime));
-      setSelectedTime(`${selectedDateTime.getHours().toString().padStart(2, '0')}:${selectedDateTime.getMinutes().toString().padStart(2, '0')}`);
-    } else {
-      setDate(undefined);
-      setSelectedTime(undefined);
-    }
-  }, [selectedDateTime, selectedStaff, selectedMenus, router]);
+  }, [selectedStaff, selectedMenus, router]);
 
   // 仮の時間帯リスト
   const timeSlots = [
@@ -45,51 +34,108 @@ export default function DateTimeStep() {
     '16:00', '16:30', '17:00', '17:30', '18:00', '18:30',
   ];
 
-  const handleDateSelect = (newDate: Date | undefined) => {
-    setDate(newDate);
-    // 日付が変更されたら、選択中の時間をリセット
-    setSelectedTime(undefined);
-    setSelectedDateTime(null);
+  const handleDateTimeSelect = (dateTime: Date) => {
+    setSelectedDateTime(dateTime);
   };
 
-  const handleTimeSelect = (time: string) => {
-    setSelectedTime(time);
-    if (date) {
-      const [hours, minutes] = time.split(':').map(Number);
-      const newDateTime = new Date(date);
-      newDateTime.setHours(hours, minutes, 0, 0);
-      setSelectedDateTime(newDateTime);
-    }
-  };
+  const today = new Date();
+  const weekDates = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(today);
+    date.setDate(today.getDate() + i + weekOffset * 7);
+    return date;
+  });
+
+  const firstDate = weekDates[0];
+  const lastDate = weekDates[6];
+  const monthDisplay =
+    firstDate.getMonth() === lastDate.getMonth()
+      ? `${firstDate.getFullYear()}年 ${firstDate.toLocaleDateString('ja-JP', { month: 'long' })}`
+      : `${firstDate.getFullYear()}年 ${firstDate.toLocaleDateString('ja-JP', {
+          month: 'long',
+        })} / ${lastDate.getFullYear()}年 ${lastDate.toLocaleDateString('ja-JP', { month: 'long' })}`;
+
+  const handlePrevWeek = () => setWeekOffset((prev) => Math.max(0, prev - 1));
+  const handleNextWeek = () => setWeekOffset((prev) => Math.min(3, prev + 1));
 
   return (
-    <div className="flex flex-col items-center p-4">
-      <h2 className="text-lg font-semibold mb-4">日付を選択</h2>
-      <Calendar
-        mode="single"
-        selected={date}
-        onSelect={handleDateSelect}
-        className="rounded-md border shadow"
-      />
-
-      {date && (
-        <div className="mt-8 w-full max-w-md">
-          <h2 className="text-lg font-semibold mb-4">時間を選択</h2>
-          <div className="grid grid-cols-3 gap-2">
-            {timeSlots.map((time) => (
-              <button
-                key={time}
-                className={`p-2 border rounded-md ${
-                  selectedTime === time ? 'bg-primary text-primary-foreground' : 'bg-secondary'
-                }`}
-                onClick={() => handleTimeSelect(time)}
-              >
-                {time}
-              </button>
-            ))}
-          </div>
+    <div className="relative overflow-visible">
+      {/* --- 固定ヘッダー --- */}
+      <div className="sticky top-[calc(var(--reservation-header-height)+var(--header-height))] z-10  bg-white/80 backdrop-blur-xl p-4 pb-2">
+        {/* 週選択 */}
+        <div className="flex items-center justify-between mb-4">
+          <Button variant="outline" onClick={handlePrevWeek} disabled={weekOffset === 0}>
+            前の1週間
+          </Button>
+          <h3 className="text-lg font-semibold">{monthDisplay}</h3>
+          <Button variant="outline" onClick={handleNextWeek} disabled={weekOffset === 3}>
+            次の1週間
+          </Button>
         </div>
-      )}
+        {/* 日付ヘッダーグリッド */}
+        <div className="grid grid-cols-[5rem_repeat(7,1fr)] gap-1 text-sm">
+          <div /> {/* 時間列のヘッダー */}
+          {weekDates.map((date) => {
+            const day = date.getDay();
+            const isSunday = day === 0;
+            const isSaturday = day === 6;
+
+            const dayClass = isSunday
+              ? 'bg-red-100 text-red-700'
+              : isSaturday
+              ? 'bg-blue-100 text-blue-700'
+              : 'bg-slate-100';
+
+            return (
+              <div
+                key={date.toISOString()}
+                className={`text-center font-semibold p-1 rounded-t-md ${dayClass}`}
+              >
+                <div>{date.getDate()}</div>
+                <div className="text-xs">{`(${date.toLocaleDateString('ja-JP', {
+                  weekday: 'short',
+                })})`}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* --- スクロールするコンテンツ --- */}
+      <div className="grid grid-cols-[5rem_repeat(7,1fr)] gap-1 text-sm px-4 pb-4 pt-2">
+        {timeSlots.map((time) => (
+          <React.Fragment key={time}>
+            <div className="text-center font-semibold p-2">{time}</div>
+            {weekDates.map((date) => {
+              const [hours, minutes] = time.split(':').map(Number);
+              const currentDateTime = new Date(date);
+              currentDateTime.setHours(hours, minutes, 0, 0);
+
+              const isSelected = selectedDateTime?.getTime() === currentDateTime.getTime();
+
+              // 過去の時間は選択不可にする
+              const isPast = currentDateTime < new Date();
+
+              return (
+                <div key={date.toISOString()} className="flex justify-center items-center">
+                  <button
+                    className={`w-full h-full p-2 border text-xs ${
+                      isSelected
+                        ? 'bg-primary text-primary-foreground'
+                        : isPast
+                          ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                          : 'bg-background'
+                    }`}
+                    onClick={() => handleDateTimeSelect(currentDateTime)}
+                    disabled={isPast}
+                  >
+                    {isPast ? '×' : '○'}
+                  </button>
+                </div>
+              );
+            })}
+          </React.Fragment>
+        ))}
+      </div>
     </div>
   );
 }

@@ -19,7 +19,7 @@ export default function FooterMenu(/*{ }: FooterMenuProps*/) {
   const menuItems: SidebarMenuItemType[] = getSidebarMenuItems(userRoles);
 
   return (
-    <div className="fixed bottom-0 left-0 w-full bg-white/80 border-t border-gray-200 md:hidden flex justify-around items-center h-[var(--footer-menu-height)] z-4 shadow-lg  backdrop-blur-xl">
+    <div className="fixed bottom-0 left-0 w-full bg-white/80 border-t border-gray-200 md:hidden flex justify-around items-center min-w-[var(--content-min-w)] h-[var(--footer-menu-height)] z-4 shadow-lg  backdrop-blur-xl">
       {menuItems
         .filter((item): item is MenuItem => item.type === 'item' && !!item.displayInFooter)
         .map((item) => {

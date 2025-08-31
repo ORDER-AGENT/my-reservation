@@ -57,17 +57,17 @@ export default function ReservationLayout({ children }: { children: React.ReactN
 
   const renderHeader = () => {
     const showStepIndicator = ['menu', 'staff', 'datetime', 'confirm'].includes(step);
-    if (showStepIndicator) {
-      return <ReservationStepIndicator currentStep={currentStep} />;
-    }
-/*    if (step === 'complete') {
-      return <CompleteStepHeader currentStep={currentStep} />;
-    }*/
-    return null;
+    return (
+      <div className="h-[var(--reservation-footer-height)] ">
+        {showStepIndicator && (
+          <ReservationStepIndicator currentStep={currentStep} />
+        )}
+      </div>
+    );
   };
 
   const renderFooter = () => (
-    <div className="h-[80px] flex items-center justify-center">
+    <div className="h-[var(--reservation-footer-height)] flex items-center justify-center">
       {step === 'menu' && (
         <ServiceMenuStepFooter
           canProceedToStaffSelection={canProceedToStaffSelection}

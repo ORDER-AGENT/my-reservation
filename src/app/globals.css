@@ -48,6 +48,10 @@
   --sidebar-width-open: 250px; /* サイドバーの開いている時の幅 */
   --sidebar-width-closed: 60px; /* サイドバーの閉じている時の幅 */
   --footer-menu-height: 56px; /* フッターメニューの高さ */
+
+  --reservation-header-height: 80px;
+  --reservation-footer-height: 80px;
+  --content-min-w: 400px;
 }
 
 :root {
