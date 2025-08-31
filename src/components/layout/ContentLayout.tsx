@@ -26,7 +26,7 @@ export default function ContentLayout({
   //console.log('ContentLayout - isMobile:', isMobile);
 
   return (
-    <div className="flex-1 flex flex-col bg-[var(--content-background)] min-w-0 h-full">
+    <div className="flex-1 flex flex-col bg-[var(--content-background)] min-w-0 max-w-[100vw] h-full">
       {/* ヘッダー */}
       {headerContent && (
         <div
@@ -36,7 +36,7 @@ export default function ContentLayout({
               : 'mb-4'
           }`}
         >
-          {headerContent}
+            {headerContent}
         </div>
       )}
 
