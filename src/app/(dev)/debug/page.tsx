@@ -5,8 +5,9 @@ import {
   reservationTotalsAtom,
   resetReservationAtom,
   selectedDateTimeAtom,
-  selectedMenusAtom,
   selectedStaffAtom,
+  selectedMenusAtom,
+  customerInfoAtom,
 } from '@/atoms/reservation';
 import { Button } from '@/components/ui/button';
 import useLocalStorage from '@/hooks/useLocalStorage';
@@ -24,6 +25,7 @@ export default function DebugPage() {
   const selectedDateTime = useAtomValue(selectedDateTimeAtom);
   const reservationTotals = useAtomValue(reservationTotalsAtom);
   const hasCheckedForRestore = useAtomValue(hasCheckedForRestoreAtom);
+  const customerInfo = useAtomValue(customerInfoAtom);
   const resetAtoms = useSetAtom(resetReservationAtom);
 
   useEffect(() => {
@@ -81,6 +83,12 @@ export default function DebugPage() {
             <h2 className="text-lg font-semibold">hasCheckedForRestore</h2>
             <pre className="text-sm whitespace-pre-wrap break-all">
               {JSON.stringify(hasCheckedForRestore, null, 2)}
+            </pre>
+          </div>
+          <div className="p-4 border rounded-md bg-gray-50">
+            <h2 className="text-lg font-semibold">customerInfo</h2>
+            <pre className="text-sm whitespace-pre-wrap break-all">
+              {JSON.stringify(customerInfo, null, 2)}
             </pre>
           </div>
         </div>
