@@ -30,7 +30,7 @@ const MermaidBlock: React.FC<Props> = ({ code }) => {
       try {
         const { svg: svgCode } = await mermaid.render(id, code);
         // SVG文字列からwidthとheight属性を削除
-        let modifiedSvgCode = svgCode.replace(/width="[^"]*"/, '').replace(/height="[^"]*"/, '');
+        const modifiedSvgCode = svgCode.replace(/width="[^"]*"/, '').replace(/height="[^"]*"/, '');
         setSvg(modifiedSvgCode);
       } catch (error) {
         console.error("Failed to render Mermaid diagram:", error);
