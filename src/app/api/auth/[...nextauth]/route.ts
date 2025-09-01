@@ -4,6 +4,7 @@ import { JWT } from "next-auth/jwt";
 import { User, Session } from "next-auth";
 import { ConvexClient } from "convex/browser"; // ConvexClient を使用
 import bcrypt from "bcryptjs"; // パスワード検証用
+import { api } from "@/convex/_generated/api"; // Convex APIのインポート
 
 // ConvexClient の初期化
 const convex = new ConvexClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -50,7 +51,7 @@ const handler = NextAuth({
         }
 
         // Convex からユーザーを取得
-        const user = await convex.query("auth:getUserByEmail", {
+        const user = await convex.query(api.auth.getUserByEmail, {
           email: credentials.email,
         });
 
@@ -98,8 +99,8 @@ const handler = NextAuth({
         token.id = user.id as string;
         token.name = user.name as string;
         token.email = user.email as string;
-        if (user.roles) {
-          token.roles = user.roles;
+        if (user.role) {
+          token.role = user.role;
         }
       }
       return token;
@@ -111,7 +112,7 @@ const handler = NextAuth({
         session.user.id = token.id as string;
         session.user.name = token.name as string;
         session.user.email = token.email as string;
-        session.user.roles = token.roles;
+        session.user.role = token.role;
       }
       return session;
     },
