@@ -17,3 +17,7 @@
 ## スキーマ変更時のドキュメント更新
 
 - `convex/schema.ts` を変更した際は、関連するテーブル定義書 (`docs/5 テーブル定義書.mdx`) および ER図 (`docs/6 ER図.mdx`) も必ず更新してください。
+
+## レスポンシブデザイン
+
+- モバイル表示の判定には `src/hooks/useMediaQuery.ts` の `useIsMobile` フックを使用してください。
