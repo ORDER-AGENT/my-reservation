@@ -2,6 +2,11 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { JWT } from "next-auth/jwt";
 import { User, Session } from "next-auth";
+import { ConvexClient } from "convex/browser"; // ConvexClient を使用
+import bcrypt from "bcryptjs"; // パスワード検証用
+
+// ConvexClient の初期化
+const convex = new ConvexClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 const handler = NextAuth({
   providers: [
@@ -30,6 +35,45 @@ const handler = NextAuth({
           // 認証失敗時にエラーをスロー
           throw new Error('パスワードが間違っています。');
         }
+      },
+    }),
+    // メールアドレスとパスワード認証用のCredentialsProviderを追加
+    CredentialsProvider({
+      name: "Email and Password",
+      credentials: {
+        email: { label: "Email", type: "text" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials, req) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        // Convex からユーザーを取得
+        const user = await convex.query("auth:getUserByEmail", {
+          email: credentials.email,
+        });
+
+        if (user && user.hashedPassword) {
+          // パスワードの検証
+          const isValidPassword = await bcrypt.compare(
+            credentials.password,
+            user.hashedPassword
+          );
+
+          if (isValidPassword) {
+            // 認証成功
+            return {
+              id: user._id, // Convex のドキュメントIDをユーザーIDとして使用
+              email: user.email,
+              name: user.name,
+              image: user.image,
+              role: user.role, // ロール情報も返す
+            };
+          }
+        }
+        // 認証失敗
+        return null;
       },
     }),
   ],
