@@ -6,6 +6,7 @@ import { selectedDateTimeAtom, selectedStaffAtom, selectedMenusAtom } from '@/at
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { FaRegCircle, FaTimes } from 'react-icons/fa';
 
 export default function DateTimeStep() {
   const [selectedDateTime, setSelectedDateTime] = useAtom(selectedDateTimeAtom);
@@ -117,19 +118,14 @@ export default function DateTimeStep() {
 
               return (
                 <div key={date.toISOString()} className="flex justify-center items-center">
-                  <button
-                    className={`w-full h-full p-2 border text-xs ${
-                      isSelected
-                        ? 'bg-primary text-primary-foreground'
-                        : isPast
-                          ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                          : 'bg-background'
-                    }`}
+                  <Button
+                    variant={isSelected ? 'default' : 'outline'}
+                    className="w-full h-full p-2 text-xs rounded-none"
                     onClick={() => handleDateTimeSelect(currentDateTime)}
                     disabled={isPast}
                   >
-                    {isPast ? '×' : '○'}
-                  </button>
+                    {isPast ? <FaTimes /> : <FaRegCircle />}
+                  </Button>
                 </div>
               );
             })}
