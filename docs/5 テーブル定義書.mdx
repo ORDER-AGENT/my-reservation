@@ -90,9 +90,13 @@ title: テーブル定義書
 | 論理名 | 物理名 | データ型 | NULL許容 | 説明 |
 | :--- | :--- | :--- | :--- | :--- |
 | 予約ID | `_id` | `Id` | No | Convexが自動生成する一意のID |
-| 顧客ID | `customerId` | `Id("users")` | No | 予約した顧客のID |
+| 顧客ID | `customerId` | `Id("users")` | Yes | 予約した顧客のID (ゲスト予約の場合はNULL) |
+| ゲスト名 | `guestName` | `string` | Yes | ゲスト予約の場合の顧客名 |
+| ゲストメール | `guestEmail` | `string` | Yes | ゲスト予約の場合の顧客メールアドレス |
+| ゲスト電話番号 | `guestPhone` | `string` | Yes | ゲスト予約の場合の顧客電話番号 |
+| 予約番号 | `reservationNumber` | `string` | Yes | ゲスト予約の場合に発行される一意の予約番号 |
 | スタッフID | `staffId` | `Id("staffs")` | No | 担当するスタッフのID |
-| サービスID | `serviceId` | `Id("services")`| No | 予約されたサービスのID |
+| サービスID | `serviceId`| `Id("services")`| No | 予約されたサービスのID |
 | 店舗ID | `storeId` | `Id("stores")` | No | 予約が行われた店舗のID |
 | 予約日時 | `dateTime` | `number` | No | 予約日時（Unixタイムスタンプ ms） |
 | ステータス | `status` | `string` | No | "pending", "confirmed", "cancelled", "completed" |
@@ -104,6 +108,7 @@ title: テーブル定義書
 - `by_customer_id` (`customerId`)
 - `by_staff_and_time` (`staffId`, `dateTime`)
 - `by_store_and_time` (`storeId`, `dateTime`)
+- `by_reservation_number` (`reservationNumber`)
 
 ---
 

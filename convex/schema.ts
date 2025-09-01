@@ -74,8 +74,14 @@ export default defineSchema({
 
   // 予約情報を格納するテーブル
   reservations: defineTable({
-    // 予約した顧客
-    customerId: v.id("users"),
+    // 予約した顧客 (ゲスト予約の場合はoptional)
+    customerId: v.optional(v.id("users")),
+    // ゲスト予約の場合の顧客情報
+    guestName: v.optional(v.string()),
+    guestEmail: v.optional(v.string()),
+    guestPhone: v.optional(v.string()),
+    // 予約番号
+    reservationNumber: v.optional(v.string()),
     staffId: v.id("staffs"),
     serviceId: v.id("services"),
     storeId: v.id("stores"),
@@ -96,7 +102,8 @@ export default defineSchema({
   })
     .index("by_customer_id", ["customerId"])
     .index("by_staff_and_time", ["staffId", "dateTime"])
-    .index("by_store_and_time", ["storeId", "dateTime"]),
+    .index("by_store_and_time", ["storeId", "dateTime"])
+    .index("by_reservation_number", ["reservationNumber"]),
 
   // スタッフの勤務スケジュールを格納するテーブル
   staffSchedules: defineTable({

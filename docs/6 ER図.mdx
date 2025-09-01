@@ -47,7 +47,11 @@ erDiagram
 
     reservations {
         id _id PK "予約ID"
-        id customerId FK "顧客ID"
+        id customerId FK "顧客ID (nullable)"
+        string guestName "ゲスト名 (nullable)"
+        string guestEmail "ゲストメール (nullable)"
+        string guestPhone "ゲスト電話番号 (nullable)"
+        string reservationNumber "予約番号 (nullable)"
         id staffId FK "スタッフID"
         id serviceId FK "サービスID"
         id storeId FK "店舗ID"
