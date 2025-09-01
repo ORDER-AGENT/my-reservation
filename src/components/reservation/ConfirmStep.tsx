@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
@@ -45,13 +46,13 @@ export default function ConfirmStep() {
     setIsSubmitting(true);
     try {
       // TODO: storeIdは将来的に動的に取得するように修正
-      const dummyStoreId = 'j0x1y2z3w4v5t6s7r8q9p0o1n2m3l4k5' as any; // ConvexのID形式に合わせる
+      const dummyStoreId = 'j0x1y2z3w4v5t6s7r8q9p0o1n2m3l4k5' as Id<'stores'>; // ConvexのID形式に合わせる
       // TODO: 複数メニュー選択に対応
       const primaryMenu = selectedMenus[0];
 
       const { reservationNumber } = await createReservation({
-        staffId: selectedStaff.id as any,
-        serviceId: primaryMenu.id as any,
+        staffId: selectedStaff.id as Id<'staffs'>,
+        serviceId: primaryMenu.id as Id<'services'>,
         storeId: dummyStoreId,
         dateTime: selectedDateTime.getTime(),
         totalPrice: totals.price,
