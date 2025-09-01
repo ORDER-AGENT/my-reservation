@@ -73,7 +73,7 @@ export default function DateTimeStep() {
           </Button>
         </div>
         {/* 日付ヘッダーグリッド */}
-        <div className="grid grid-cols-[5rem_repeat(7,1fr)] gap-1 text-sm">
+        <div className="grid grid-cols-[3rem_repeat(7,1fr)] gap-1 text-sm">
           <div /> {/* 時間列のヘッダー */}
           {weekDates.map((date) => {
             const day = date.getDay();
@@ -102,7 +102,7 @@ export default function DateTimeStep() {
       </div>
 
       {/* --- スクロールするコンテンツ --- */}
-      <div className="grid grid-cols-[5rem_repeat(7,1fr)] gap-1 text-sm px-4 pb-4 pt-2">
+      <div className="grid grid-cols-[3rem_repeat(7,1fr)] gap-1 text-sm px-4 pb-4 pt-2">
         {timeSlots.map((time) => (
           <React.Fragment key={time}>
             <div className="text-center font-semibold p-2">{time}</div>

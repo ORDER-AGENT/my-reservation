@@ -42,7 +42,7 @@ export default function ContentLayout({
 
       {/* コンテンツ */}
       <div
-        className={`flex-grow px-4 pb-4 ${headerContent && isHeaderFixed ? 'pt-0' : 'pt-4'}`}
+        className={`flex-grow md:px-4 pb-4 ${headerContent && isHeaderFixed ? 'pt-0' : 'pt-4'}`}
       >
         {children}
       </div>

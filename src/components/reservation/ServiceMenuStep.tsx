@@ -69,7 +69,7 @@ export default function MenuStep() {
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 mt-2">
+      <div className="grid grid-cols-1 gap-4 mt-2 px-2 md:px-4">
         {serviceMenus.map((menu) => {
           const isSelected = !!selectedMenus.find((m) => m.id === menu.id);
           return (
