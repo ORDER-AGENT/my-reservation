@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "My Reservation",
-  description: "A reservation system for small businesses.",
+  title: "YOYAKU",
+  description: "スモールビジネス向け予約システムサンプル.",
 };
 
 export default async function RootLayout({
