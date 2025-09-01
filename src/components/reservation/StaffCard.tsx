@@ -29,8 +29,9 @@ export default function StaffCard({ staff, isSelected, onToggle }: StaffCardProp
             <Image
               src={staff.avatarUrl}
               alt={staff.name}
-              layout="fill"
-              objectFit="cover"
+              fill
+              sizes="64px"
+              style={{ objectFit: 'cover' }}
               className="rounded-full"
             />
           )}

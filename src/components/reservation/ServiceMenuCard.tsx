@@ -31,8 +31,9 @@ export default function ServiceMenuCard({ menu, isSelected, onToggle }: ServiceM
             <Image
               src={menu.imageUrl}
               alt={menu.name}
-              layout="fill"
-              objectFit="cover"
+              fill
+              sizes="64px"
+              style={{ objectFit: 'cover' }}
               className="rounded-md"
             />
           </div>
