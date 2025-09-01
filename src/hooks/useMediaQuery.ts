@@ -41,3 +41,13 @@ export function useScreenSize() {
   };
 }
 
+/**
+ * モバイルデバイスかどうかを判定するカスタムフック。
+ * useScreenSize().isMobile のエイリアスです。
+ *
+ * @returns {boolean | null} モバイルサイズの場合はtrue、それ以外の場合はfalse。サーバーサイドレンダリング時や初期化中はnull。
+ */
+export function useIsMobile() {
+  return useScreenSize().isMobile;
+}
+

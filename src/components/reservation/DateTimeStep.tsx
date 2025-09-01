@@ -61,7 +61,7 @@ export default function DateTimeStep() {
   return (
     <div className="relative overflow-visible">
       {/* --- 固定ヘッダー --- */}
-      <div className="sticky top-[calc(var(--reservation-header-height)+var(--header-height))] z-10  bg-white/80 backdrop-blur-xl p-4 pb-2">
+      <div className="sticky top-[calc(var(--reservation-header-height)+var(--header-height))] z-1 bg-white/80 backdrop-blur-xl p-4 pb-2">
         {/* 週選択 */}
         <div className="flex items-center justify-between mb-4">
           <Button variant="outline" onClick={handlePrevWeek} disabled={weekOffset === 0}>

@@ -11,8 +11,8 @@ const stepNames = [
   'メニュー選択',
   'スタッフ選択',
   '日時選択',
+  'お客様情報入力',
   '確認',
-//  '完了',
 ];
 
 export default function ReservationStepIndicator({ currentStep }: ReservationStepIndicatorProps) {

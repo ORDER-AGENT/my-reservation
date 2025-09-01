@@ -2,23 +2,23 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import type { Staff } from '@/types/data';
-import { useRouter } from 'next/navigation';
+import { useAtomValue } from 'jotai';
+import { selectedStaffAtom } from '@/atoms/reservation';
 
 interface StaffStepFooterProps {
-  selectedStaff: Staff | null;
+  onNextClick: () => void;
+  onBackClick: () => void;
 }
 
-export default function StaffStepFooter({
-  selectedStaff,
-}: StaffStepFooterProps) {
-  const router = useRouter();
+export default function StaffStepFooter({ onNextClick, onBackClick }: StaffStepFooterProps) {
+  const selectedStaff = useAtomValue(selectedStaffAtom);
+  const canProceed = !!selectedStaff;
 
   return (
     <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 w-full">
       <div className="flex items-center justify-between">
         <div>
-          <Button variant="outline" onClick={() => router.back()}>
+          <Button variant="outline" onClick={onBackClick}>
             戻る
           </Button>
         </div>
@@ -30,8 +30,8 @@ export default function StaffStepFooter({
         </div>
         <div>
           <Button
-            onClick={() => router.push('/customer/reservation/datetime')}
-            disabled={!selectedStaff}
+            onClick={onNextClick}
+            disabled={!canProceed}
           >
             日時選択へ
           </Button>

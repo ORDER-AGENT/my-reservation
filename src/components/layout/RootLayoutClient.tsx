@@ -73,7 +73,7 @@ function MainLayout({ children, initialIsMenuOpen }: {
           }`}
         >
           {children}
-          <Toaster />
+          <Toaster position="top-center" richColors />
         </main>
       </div>
       {isMobile && <FooterMenu />}

@@ -1,5 +1,5 @@
 import { atom } from 'jotai';
-import type { ServiceMenu, Staff } from '@/types/data';
+import type { ServiceMenu, Staff, CustomerInfo } from '@/types/data';
 
 export type ReservationTotals = {
   price: number;
@@ -15,6 +15,9 @@ export const selectedStaffAtom = atom<Staff | null>(null);
 // 選択された日時を管理するatom
 export const selectedDateTimeAtom = atom<Date | null>(null);
 
+// お客様情報を管理するatom
+export const customerInfoAtom = atom<CustomerInfo | null>(null);
+
 // 復元確認済みフラグを管理するatom
 export const hasCheckedForRestoreAtom = atom(false);
 
@@ -25,6 +28,7 @@ export const resetReservationAtom = atom(
     set(selectedMenusAtom, []);
     set(selectedStaffAtom, null);
     set(selectedDateTimeAtom, null);
+    set(customerInfoAtom, null);
     set(hasCheckedForRestoreAtom, false);
   }
 );

@@ -1,85 +1,67 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { useAtom } from 'jotai';
-import {
-  selectedMenusAtom,
-  reservationTotalsAtom,
-  selectedStaffAtom,
-  selectedDateTimeAtom,
-} from '@/atoms/reservation';
 import ContentLayout from '@/components/layout/ContentLayout';
 import ReservationStepIndicator from '@/components/reservation/ReservationStepIndicator';
 import ServiceMenuStepFooter from '@/components/reservation/ServiceMenuStepFooter';
 import StaffStepFooter from '@/components/reservation/StaffStepFooter';
 import DateTimeStepFooter from '@/components/reservation/DateTimeStepFooter';
+import CustomerInfoStepFooter from '@/components/reservation/CustomerInfoStepFooter';
 import ConfirmFooter from '@/components/reservation/ConfirmFooter';
 import { useEffect } from 'react';
+import { stepOrder } from '@/types/reservation';
 
 export default function ReservationLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // パスから現在のステップを判別
-  const step = pathname.split('/').pop() || 'menu';
+  const step = pathname.split('/').pop() || stepOrder[0];
+  const currentStepIndex = (stepOrder as readonly string[]).indexOf(step);
 
-  const [selectedMenus] = useAtom(selectedMenusAtom);
-  const [totals] = useAtom(reservationTotalsAtom);
-  const [selectedStaff] = useAtom(selectedStaffAtom);
-  const [selectedDateTime] = useAtom(selectedDateTimeAtom);
+  useEffect(() => {
+    // 無効なステップURLの場合は最初のステップにリダイレクト
+    if (currentStepIndex === -1 && step !== 'complete') {
+      router.replace(`/customer/reservation/${stepOrder[0]}`);
+    }
+  }, [step, currentStepIndex, router]);
 
-  const canProceedToStaffSelection = selectedMenus.length > 0;
-  const canProceedToDateTimeSelection = !!selectedDateTime;
-
-  const handleConfirm = () => {
-    console.log('予約を確定しました！', { selectedMenus, totals, selectedStaff, selectedDateTime });
-    // TODO: 予約確定後の処理（API呼び出しなど）
-    router.push('/customer/reservation/complete'); // 完了画面へ遷移
+  const handleNext = () => {
+    const nextStep = stepOrder[currentStepIndex + 1];
+    if (nextStep) {
+      router.push(`/customer/reservation/${nextStep}`);
+    }
   };
 
-  const currentStep = (() => {
-    switch (step) {
-      case 'menu': return 1;
-      case 'staff': return 2;
-      case 'datetime': return 3;
-      case 'confirm': return 4;
-      case 'complete': return 5;
-      default: return 1;
+  const handleBack = () => {
+    const backStep = stepOrder[currentStepIndex - 1];
+    if (backStep) {
+      router.push(`/customer/reservation/${backStep}`);
     }
-  })();
-
-  const validSteps = ['menu', 'staff', 'datetime', 'confirm', 'complete'];
-  useEffect(() => {
-    if (!validSteps.includes(step)) {
-      router.replace('/customer/reservation/menu');
+    else {
+      router.push(`/`);
     }
-  }, [step, router]);
+  };
 
   const renderHeader = () => {
-    const showStepIndicator = ['menu', 'staff', 'datetime', 'confirm'].includes(step);
+    const showStepIndicator = currentStepIndex !== -1;
     return (
       <div className="h-[var(--reservation-footer-height)] ">
-        {showStepIndicator && (
-          <ReservationStepIndicator currentStep={currentStep} />
-        )}
+        {showStepIndicator && <ReservationStepIndicator currentStep={currentStepIndex + 1} />}
       </div>
     );
   };
 
-  const renderFooter = () => (
-    <div className="h-[var(--reservation-footer-height)] flex items-center justify-center">
-      {step === 'menu' && (
-        <ServiceMenuStepFooter
-          canProceedToStaffSelection={canProceedToStaffSelection}
-          handleNextStep={() => router.push('/customer/reservation/staff')}
-          totals={totals}
-        />
-      )}
-      {step === 'staff' && <StaffStepFooter selectedStaff={selectedStaff} />}
-      {step === 'datetime' && <DateTimeStepFooter canProceedToDateTimeSelection={canProceedToDateTimeSelection} />}
-      {step === 'confirm' && <ConfirmFooter totals={totals} handleConfirm={handleConfirm} />}
-    </div>
-  );
+  const renderFooter = () => {
+    return (
+      <div className="h-[var(--reservation-footer-height)] flex items-center justify-center">
+        {step === 'service-menu' && <ServiceMenuStepFooter onNextClick={handleNext} onBackClick={handleBack} />}
+        {step === 'staff' && <StaffStepFooter onNextClick={handleNext} onBackClick={handleBack} />}
+        {step === 'datetime' && <DateTimeStepFooter onNextClick={handleNext} onBackClick={handleBack} />}
+        {step === 'customer-info' && <CustomerInfoStepFooter onNextClick={handleNext} onBackClick={handleBack} />}
+        {step === 'confirm' && <ConfirmFooter onBackClick={handleBack} />}
+      </div>
+    );
+  };
 
   return (
     <ContentLayout

@@ -1,27 +1,27 @@
+'use client';
+
 import { Button } from '@/components/ui/button';
 import { selectedDateTimeAtom } from '@/atoms/reservation';
-import { useAtom } from 'jotai';
-import { useRouter } from 'next/navigation'; // 追加
+import { useAtomValue } from 'jotai';
 
 interface DateTimeStepFooterProps {
-  canProceedToDateTimeSelection: boolean;
+  onNextClick: () => void;
+  onBackClick: () => void;
 }
 
-export default function DateTimeStepFooter({
-  canProceedToDateTimeSelection,
-}: DateTimeStepFooterProps) {
-  const [selectedDateTime] = useAtom(selectedDateTimeAtom);
-  const router = useRouter(); // 追加
+export default function DateTimeStepFooter({ onNextClick, onBackClick }: DateTimeStepFooterProps) {
+  const selectedDateTime = useAtomValue(selectedDateTimeAtom);
+  const canProceed = !!selectedDateTime;
 
   return (
     <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 w-full">
       <div className="flex items-center justify-between">
         <div>
-          <Button variant="outline" onClick={() => router.back()}>
+          <Button variant="outline" onClick={onBackClick}>
             戻る
           </Button>
         </div>
-        <div className="flex-grow text-center"> {/* 変更 */}
+        <div className="flex-grow text-center">
           <h2 className="md:text-lg font-semibold">選択中の日時</h2>
           <p className="text-sm text-muted-foreground">
             {selectedDateTime
@@ -37,11 +37,10 @@ export default function DateTimeStepFooter({
         </div>
         <div>
           <Button
-            onClick={() => router.push('/customer/reservation/confirm')}
-            disabled={!canProceedToDateTimeSelection}
-            variant={canProceedToDateTimeSelection ? 'default' : 'outline'}
+            onClick={onNextClick}
+            disabled={!canProceed}
           >
-            予約内容確認へ
+            お客様情報入力へ
           </Button>
         </div>
       </div>

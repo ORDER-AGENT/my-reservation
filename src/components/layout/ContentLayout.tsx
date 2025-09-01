@@ -32,7 +32,7 @@ export default function ContentLayout({
         <div
           className={`${
             isHeaderFixed
-              ? 'sticky top-[var(--header-height)] z-10 bg-[var(--content-background)]/80 backdrop-blur-xl'
+              ? 'sticky top-[var(--header-height)] z-5 bg-[var(--content-background)]/80 backdrop-blur-xl'
               : 'mb-4'
           }`}
         >

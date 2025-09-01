@@ -2,27 +2,24 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import type { ReservationTotals } from '@/atoms/reservation';
-import { useRouter } from 'next/navigation';
+import { useAtomValue } from 'jotai';
+import { reservationTotalsAtom, selectedMenusAtom } from '@/atoms/reservation';
 
-interface MenuStepFooterProps {
-  canProceedToStaffSelection: boolean;
-  handleNextStep: () => void;
-  totals: ReservationTotals;
+interface ServiceMenuStepFooterProps {
+  onNextClick: () => void;
+  onBackClick: () => void;
 }
 
-export default function MenuStepFooter({
-  canProceedToStaffSelection,
-  handleNextStep,
-  totals,
-}: MenuStepFooterProps) {
-  const router = useRouter();
+export default function ServiceMenuStepFooter({ onNextClick, onBackClick }: ServiceMenuStepFooterProps) {
+  const totals = useAtomValue(reservationTotalsAtom);
+  const selectedMenus = useAtomValue(selectedMenusAtom);
+  const canProceed = selectedMenus.length > 0;
 
   return (
     <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 w-full">
       <div className="flex items-center justify-between">
         <div>
-          <Button variant="outline" onClick={() => router.back()}>
+          <Button variant="outline" onClick={onBackClick}>
             戻る
           </Button>
         </div>
@@ -34,9 +31,8 @@ export default function MenuStepFooter({
         </div>
         <div>
           <Button
-            onClick={handleNextStep}
-            disabled={!canProceedToStaffSelection}
-            variant={canProceedToStaffSelection ? 'default' : 'outline'}
+            onClick={onNextClick}
+            disabled={!canProceed}
           >
             スタッフ選択へ
           </Button>

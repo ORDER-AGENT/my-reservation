@@ -18,3 +18,9 @@ export type LastReservation = {
   staff: Staff | null;
   timestamp: string;
 };
+
+export interface CustomerInfo {
+  name: string;
+  phone: string;
+  email: string;
+}
