@@ -110,7 +110,7 @@ export const allMenuItems: SidebarMenuItemType[] = [
     key: 'github',
     icon: FaGithub,
     text: 'GitHub',
-    path: 'https://github.com/ORDER-AGENT/my-resavation',
+    path: 'https://github.com/ORDER-AGENT/my-reservation',
     displayInFooter: false,
     isExternal: true,
   },
