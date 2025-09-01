@@ -1,0 +1,127 @@
+---
+slug: table-definition
+title: テーブル定義書
+---
+
+# テーブル定義書
+
+本ドキュメントは、Convexデータベースの各テーブル（コレクション）の構造を定義します。
+
+---
+
+## `stores`
+
+店舗の基本情報を管理するテーブル。
+
+| 論理名 | 物理名 | データ型 | NULL許容 | 説明 |
+| :--- | :--- | :--- | :--- | :--- |
+| 店舗ID | `_id` | `Id` | No | Convexが自動生成する一意のID |
+| 店舗名 | `name` | `string` | No | 店舗の正式名称 |
+| 住所 | `address` | `string` | No | 店舗の所在地 |
+| 電話番号 | `phone` | `string` | No | 店舗の電話番号 |
+| 営業時間 | `openingHours` | `Array<Object>` | No | 曜日ごとの営業時間（dayOfWeek, startTime, endTime） |
+| 特別休業日 | `specialHolidays` | `Array<string>` | Yes | 特定の休業日（"YYYY-MM-DD"形式） |
+
+---
+
+## `users`
+
+顧客、スタッフ、管理者を含むすべてのユーザー情報を管理するテーブル。NextAuth.jsによる認証と連携します。
+
+| 論理名 | 物理名 | データ型 | NULL許容 | 説明 |
+| :--- | :--- | :--- | :--- | :--- |
+| ユーザーID | `_id` | `Id` | No | Convexが自動生成する一意のID |
+| 名前 | `name` | `string` | Yes | ユーザー名。OAuthプロバイダから取得 |
+| メールアドレス | `email` | `string` | No | ログインに使用するメールアドレス |
+| 画像URL | `image` | `string` | Yes | プロフィール画像のURL |
+| 認証トークン | `tokenIdentifier` | `string` | No | NextAuth.jsがユーザーを識別するためのトークン |
+| 役割 | `role` | `string` | No | "customer", "staff", "admin" のいずれか |
+| 店舗ID | `storeId` | `Id("stores")` | Yes | スタッフ/管理者が所属する店舗のID |
+
+### インデックス
+- `by_email` (`email`)
+- `by_token` (`tokenIdentifier`)
+
+---
+
+## `staffs`
+
+スタッフの詳細情報を管理するテーブル。`users`テーブルと1対1で関連付きます。
+
+| 論理名 | 物理名 | データ型 | NULL許容 | 説明 |
+| :--- | :--- | :--- | :--- | :--- |
+| スタッフID | `_id` | `Id` | No | Convexが自動生成する一意のID |
+| ユーザーID | `userId` | `Id("users")` | No | 関連する`users`テーブルのID |
+| 店舗ID | `storeId` | `Id("stores")` | No | 所属する`stores`テーブルのID |
+| 役職 | `title` | `string` | No | スタイリスト、ネイリストなど |
+| 自己紹介 | `bio` | `string` | Yes | プロフィールページの自己紹介文 |
+| 画像URL | `imageUrl` | `string` | Yes | スタッフ個人のプロフィール画像URL |
+
+### インデックス
+- `by_user_id` (`userId`)
+- `by_store_id` (`storeId`)
+
+---
+
+## `services`
+
+店舗が提供する施術メニューを管理するテーブル。
+
+| 論理名 | 物理名 | データ型 | NULL許容 | 説明 |
+| :--- | :--- | :--- | :--- | :--- |
+| サービスID | `_id` | `Id` | No | Convexが自動生成する一意のID |
+| 店舗ID | `storeId` | `Id("stores")` | No | 提供する`stores`テーブルのID |
+| メニュー名 | `name` | `string` | No | 施術メニューの名称 |
+| 説明 | `description` | `string` | No | メニューの詳細な説明 |
+| 価格 | `price` | `number` | No | メニューの価格（円） |
+| 所要時間(分) | `duration` | `number` | No | 施術にかかる時間（分単位） |
+| カテゴリ | `category` | `string` | No | カット、カラー、トリートメントなど |
+| 提供中フラグ | `isActive` | `boolean` | No | 現在このメニューが提供中かを示すフラグ |
+
+### インデックス
+- `by_store_id` (`storeId`)
+
+---
+
+## `reservations`
+
+予約情報を管理する中心的なテーブル。
+
+| 論理名 | 物理名 | データ型 | NULL許容 | 説明 |
+| :--- | :--- | :--- | :--- | :--- |
+| 予約ID | `_id` | `Id` | No | Convexが自動生成する一意のID |
+| 顧客ID | `customerId` | `Id("users")` | No | 予約した顧客のID |
+| スタッフID | `staffId` | `Id("staffs")` | No | 担当するスタッフのID |
+| サービスID | `serviceId` | `Id("services")`| No | 予約されたサービスのID |
+| 店舗ID | `storeId` | `Id("stores")` | No | 予約が行われた店舗のID |
+| 予約日時 | `dateTime` | `number` | No | 予約日時（Unixタイムスタンプ ms） |
+| ステータス | `status` | `string` | No | "pending", "confirmed", "cancelled", "completed" |
+| 合計料金 | `totalPrice` | `number` | No | 予約時点での合計料金 |
+| 合計時間 | `totalDuration`| `number` | No | 予約時点での合計所要時間（分） |
+| メモ | `notes` | `string` | Yes | 顧客からの要望などのメモ |
+
+### インデックス
+- `by_customer_id` (`customerId`)
+- `by_staff_and_time` (`staffId`, `dateTime`)
+- `by_store_and_time` (`storeId`, `dateTime`)
+
+---
+
+## `schedules`
+
+スタッフの勤務スケジュールを管理するテーブル。
+
+| 論理名 | 物理名 | データ型 | NULL許容 | 説明 |
+| :--- | :--- | :--- | :--- | :--- |
+| スケジュールID | `_id` | `Id` | No | Convexが自動生成する一意のID |
+| スタッフID | `staffId` | `Id("staffs")` | No | 関連するスタッフのID |
+| 日付 | `date` | `string` | No | 勤務日（"YYYY-MM-DD"形式） |
+| 開始時間 | `startTime` | `string` | No | 勤務開始時間（"HH:mm"形式） |
+| 終了時間 | `endTime` | `string` | No | 勤務終了時間（"HH:mm"形式） |
+| 休憩時間 | `breaks` | `Array<Object>` | Yes | 休憩時間（startTime, endTime）の配列 |
+
+### インデックス
+- `by_staff_and_date` (`staffId`, `date`)
+
+---
+

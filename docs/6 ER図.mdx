@@ -1,0 +1,82 @@
+---
+slug: er
+title: ER図
+---  
+
+<MermaidBlock code={`
+erDiagram
+    stores {
+        id _id PK "店舗ID"
+        string name "店舗名"
+        string address "住所"
+        string phone "電話番号"
+        array_object openingHours "営業時間"
+        array_string specialHolidays "特別休業日"
+    }
+
+    users {
+        id _id PK "ユーザーID"
+        string name "名前 (nullable)"
+        string email "メールアドレス"
+        string image "画像URL (nullable)"
+        string tokenIdentifier "認証トークン"
+        string hashedPassword "パスワードハッシュ (nullable)"
+        string role "役割"
+        id storeId FK "店舗ID (nullable)"
+    }
+
+    staffs {
+        id _id PK "スタッフID"
+        id userId FK "ユーザーID"
+        id storeId FK "店舗ID"
+        string title "役職"
+        string bio "自己紹介 (nullable)"
+        string imageUrl "画像URL (nullable)"
+    }
+
+    services {
+        id _id PK "サービスID"
+        id storeId FK "店舗ID"
+        string name "メニュー名"
+        string description "説明"
+        number price "価格"
+        number duration "所要時間(分)"
+        string category "カテゴリ"
+        boolean isActive "提供中フラグ"
+    }
+
+    reservations {
+        id _id PK "予約ID"
+        id customerId FK "顧客ID"
+        id staffId FK "スタッフID"
+        id serviceId FK "サービスID"
+        id storeId FK "店舗ID"
+        number dateTime "予約日時"
+        string status "ステータス"
+        number totalPrice "合計料金"
+        number totalDuration "合計時間"
+        string notes "メモ (nullable)"
+    }
+
+    schedules {
+        id _id PK "スケジュールID"
+        id staffId FK "スタッフID"
+        string date "日付"
+        string startTime "開始時間"
+        string endTime "終了時間"
+        array_object breaks "休憩時間 (nullable)"
+    }
+
+    stores ||--o{ users : "所属"
+    stores ||--o{ staffs : "所属"
+    stores ||--o{ services : "提供"
+    stores ||--o{ reservations : "行われる"
+
+    users }o--|| staffs : "詳細情報"
+    users ||--o{ reservations : "行う"
+
+    staffs ||--o{ reservations : "担当"
+    staffs ||--o{ schedules : "勤務"
+
+    services ||--o{ reservations : "予約される"
+`} />
