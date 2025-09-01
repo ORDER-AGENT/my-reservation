@@ -91,7 +91,7 @@ export default function DebugPage() {
         <div className="space-x-2 mb-4">
           <Button onClick={handleRefresh}>Refresh</Button>
           <Button variant="destructive" onClick={handleClearLocalStorage}>
-            Clear 'lastReservation'
+            Clear lastReservation
           </Button>
         </div>
         <div className="p-4 border rounded-md bg-gray-50">
