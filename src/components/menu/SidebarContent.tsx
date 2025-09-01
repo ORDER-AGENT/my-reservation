@@ -26,7 +26,7 @@ export default function SidebarContent({
   isOverlay,
 }: SidebarContentProps) {
   const pathname = usePathname();
-
+  
   if (!menuItems || menuItems.length === 0) {
     return (
       <div className="flex items-center justify-center w-full py-4">
@@ -49,7 +49,7 @@ export default function SidebarContent({
               icon={item.icon}
               text={item.text}
               isMenuOpen={isMenuOpenForContent}
-              isSelected={pathname === item.path}
+              isSelected={item.path === '/' ? pathname === '/' : pathname.startsWith(item.path)}
               isHovered={hoveredItem === item.key}
               onMouseEnter={() => onMouseEnter(item.key)}
               onMouseLeave={() => onMouseLeave(null)}

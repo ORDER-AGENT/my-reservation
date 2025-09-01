@@ -38,7 +38,7 @@ export default function CustomerTopPage() {
             簡単なステップで、いつでもご予約いただけます。
           </p>
           <Button asChild size="lg">
-            <Link href="/customer/reservation/menu">予約をはじめる</Link>
+            <Link href="/customer/reservation">予約をはじめる</Link>
           </Button>
         </div>
       </div>
