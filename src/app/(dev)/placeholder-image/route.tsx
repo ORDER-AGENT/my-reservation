@@ -1,8 +1,6 @@
 import { ImageResponse } from 'next/og'
 import { type NextRequest } from 'next/server'
 
-export const contentType = 'image/png'
-
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
   const width = Number(searchParams.get('width')) || 1200
@@ -36,6 +34,9 @@ export async function GET(request: NextRequest) {
     {
       width,
       height,
+      headers: {
+        'Content-Type': 'image/png',
+      },
     },
   )
 }
