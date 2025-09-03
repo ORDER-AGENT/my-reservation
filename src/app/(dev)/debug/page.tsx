@@ -14,6 +14,9 @@ import useLocalStorage from '@/hooks/useLocalStorage';
 import type { LastReservation } from '@/types/data';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../../convex/_generated/api';
 
 export default function DebugPage() {
   const { getItem, removeItem } = useLocalStorage<LastReservation>('lastReservation');
@@ -27,6 +30,9 @@ export default function DebugPage() {
   const hasCheckedForRestore = useAtomValue(hasCheckedForRestoreAtom);
   const customerInfo = useAtomValue(customerInfoAtom);
   const resetAtoms = useSetAtom(resetReservationAtom);
+
+  const { data: session } = useSession();
+  const user = useQuery(api.users.getUserByEmail, session?.user.email ? { email: session.user.email } : 'skip');
 
   useEffect(() => {
     setReservation(getItem());
@@ -91,6 +97,22 @@ export default function DebugPage() {
               {JSON.stringify(customerInfo, null, 2)}
             </pre>
           </div>
+        </div>
+      </div>
+
+      <div>
+        <h1 className="text-2xl font-bold mb-4">Debug: Current User</h1>
+        <div className="p-4 border rounded-md bg-gray-50">
+          <h2 className="text-lg font-semibold">Session Data</h2>
+          <pre className="text-sm whitespace-pre-wrap break-all">
+            {JSON.stringify(session, null, 2)}
+          </pre>
+        </div>
+        <div className="p-4 border rounded-md bg-gray-50 mt-4">
+          <h2 className="text-lg font-semibold">User Document (from Convex)</h2>
+          <pre className="text-sm whitespace-pre-wrap break-all">
+            {JSON.stringify(user, null, 2)}
+          </pre>
         </div>
       </div>
 
