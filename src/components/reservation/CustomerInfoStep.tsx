@@ -22,6 +22,8 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { CustomerInfo } from '@/types/data';
 import { toast } from 'sonner';
+import { useEffect, useCallback, useState } from 'react';
+import { Separator } from '@/components/ui/separator';
 
 // ゲスト入力フォームのスキーマ定義
 const guestFormSchema = z.object({
@@ -30,11 +32,17 @@ const guestFormSchema = z.object({
   email: z.string().email({ message: '有効なメールアドレスを入力してください。' }),
 });
 
-export default function CustomerInfoStep() {
+interface CustomerInfoStepProps {
+  onNextClick: () => void;
+}
+
+export default function CustomerInfoStep({ onNextClick }: CustomerInfoStepProps) {
   const { data: session } = useSession();
   const [customerInfo, setCustomerInfo] = useAtom(customerInfoAtom);
   const params = useParams();
   const step = params.step;
+  const [activeTab, setActiveTab] = useState('login');
+  
 
   const form = useForm<z.infer<typeof guestFormSchema>>({
     resolver: zodResolver(guestFormSchema),
@@ -50,7 +58,7 @@ export default function CustomerInfoStep() {
     toast.success('お客様情報を保存しました。');
   }
 
-  const handleUseSessionInfo = () => {
+  const updateCustomerInfoFromSession = useCallback(() => {
     if (session?.user) {
       const sessionCustomerInfo: CustomerInfo = {
         name: session.user.name ?? '名無し',
@@ -58,9 +66,23 @@ export default function CustomerInfoStep() {
         phone: '' // セッションに電話番号はないため空文字。必要であれば入力させる。
       };
       setCustomerInfo(sessionCustomerInfo);
-      toast.success('ログイン情報を使用します。');
+      //toast.success('ログイン情報を使用します。');
     }
+  }, [session, setCustomerInfo]);
+
+  const handleUseSessionInfo = () => {
+    updateCustomerInfoFromSession();
+    onNextClick();
   };
+
+  useEffect(() => {
+    // セッション情報があり、かつ顧客情報がまだセッション情報で初期化されていない、
+    // または顧客情報のメールアドレスがセッションのメールアドレスと異なる場合のみ実行
+    if (session?.user && (!customerInfo || customerInfo.email !== session.user.email)) {
+      updateCustomerInfoFromSession();
+    }
+  }, [session, customerInfo, updateCustomerInfoFromSession]);
+
 
   if (session) {
     return (
@@ -75,7 +97,7 @@ export default function CustomerInfoStep() {
             <p><strong>メールアドレス:</strong> {session.user?.email}</p>
           </div>
           <p className='text-sm text-gray-600'>この情報で予約を続けますか？電話番号など、追加情報が必要な場合は、一度ログアウトしてゲストとしてご予約ください。</p>
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col gap-2">
             <Button onClick={handleUseSessionInfo} className="w-full">この情報で予約を進める</Button>
             <Button variant="outline" onClick={() => signOut({ callbackUrl: `/customer/reservation/${step}` })} className="w-full">別のアカウントでログイン</Button>
           </div>
@@ -85,7 +107,7 @@ export default function CustomerInfoStep() {
   }
 
   return (
-    <Tabs defaultValue="login" className="w-full max-w-2xl mx-auto p-4">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-2xl mx-auto p-4">
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="login">ログイン / 新規登録</TabsTrigger>
         <TabsTrigger value="guest">ゲストとして予約</TabsTrigger>
@@ -100,13 +122,15 @@ export default function CustomerInfoStep() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className='text-sm text-gray-600'>ログインまたは新規登録を行うと、入力の手間が省け、次回の予約がよりスムーズになります。</p>
-            <div className="flex flex-col flex-col gap-2">
+            <div className="flex flex-col gap-2">
                 <Button asChild className="w-full">
                     <Link href={`/auth/signin?callbackUrl=/customer/reservation/${step}`}>ログインページへ</Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full">
                     <Link href={`/auth/signup?callbackUrl=/customer/reservation/${step}`}>新規登録ページへ</Link>
                 </Button>
+                <Separator className="my-4" />
+                <Button variant="outline" className="w-full" onClick={() => setActiveTab('guest')}>ゲストとして予約</Button>
             </div>
           </CardContent>
         </Card>

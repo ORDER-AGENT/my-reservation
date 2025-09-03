@@ -7,10 +7,12 @@ import DateTimeStep from '@/components/reservation/DateTimeStep';
 import CustomerInfoStep from '@/components/reservation/CustomerInfoStep';
 import ConfirmStep from '@/components/reservation/ConfirmStep';
 import CompleteStep from '@/components/reservation/CompleteStep';
+import { useReservationNavigation } from '@/contexts/ReservationNavigationContext';
 
 export default function ReservationStepPage() {
   const params = useParams();
   const step = params.step as string;
+  const { onNextClick } = useReservationNavigation();
 
   const renderStepContent = () => {
     switch (step) {
@@ -21,7 +23,7 @@ export default function ReservationStepPage() {
       case 'datetime':
         return <DateTimeStep />;
       case 'customer-info':
-        return <CustomerInfoStep />;
+        return <CustomerInfoStep onNextClick={onNextClick} />;
       case 'confirm':
         return <ConfirmStep />;
       case 'complete':

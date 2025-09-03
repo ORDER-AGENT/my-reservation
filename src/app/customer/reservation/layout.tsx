@@ -10,6 +10,7 @@ import CustomerInfoStepFooter from '@/components/reservation/CustomerInfoStepFoo
 import ConfirmFooter from '@/components/reservation/ConfirmFooter';
 import { useEffect } from 'react';
 import { stepOrder } from '@/types/reservation';
+import ReservationNavigationContext from '@/contexts/ReservationNavigationContext';
 
 export default function ReservationLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -70,7 +71,9 @@ export default function ReservationLayout({ children }: { children: React.ReactN
       footerContent={renderFooter()}
       isFooterFixed={true}
     >
-      {children}
+      <ReservationNavigationContext.Provider value={{ onNextClick: handleNext, onBackClick: handleBack }}>
+        {children}
+      </ReservationNavigationContext.Provider>
     </ContentLayout>
   );
 }
