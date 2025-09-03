@@ -6,6 +6,7 @@ import { ConvexClient } from "convex/browser"; // ConvexClient を使用
 import bcrypt from "bcryptjs"; // パスワード検証用
 import { api } from "@/convex/_generated/api"; // Convex APIのインポート
 import { UserRole } from '@/types/user';
+import { Id } from '@/convex/_generated/dataModel';
 
 // ConvexClient の初期化
 const convex = new ConvexClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -32,7 +33,7 @@ const handler = NextAuth({
           // 認証成功: ユーザーオブジェクトを返す
           // ここで返されるオブジェクトはセッションに保存されます。
           // 実際のアプリケーションでは、データベースからユーザー情報を取得します。
-          return { id: 'admin', name: '管理者', email: 'admin@example.com', role: 'admin' };
+          return { id: 'admin', name: '管理者', email: 'admin@example.com', role: 'admin', storeId: undefined }; // admin には storeId は不要
         } else {
           // 認証失敗時にエラーをスロー
           throw new Error('パスワードが間違っています。');
@@ -87,7 +88,8 @@ const handler = NextAuth({
               email: user.email,
               name: user.name,
               image: user.image,
-              role: user.role, // ロール情報も返す
+              role: user.role,
+              storeId: user.storeId,
             };
           } else {
             console.log("Invalid password for user:", user.email);
@@ -124,6 +126,9 @@ const handler = NextAuth({
         if (user.role) {
           token.role = user.role;
         }
+        if (user.storeId) {
+          token.storeId = user.storeId;
+        }
       }
       return token;
     },
@@ -135,6 +140,9 @@ const handler = NextAuth({
         session.user.name = token.name as string;
         session.user.email = token.email as string;
         session.user.role = token.role as UserRole;
+        if (token.storeId) {
+          session.user.storeId = token.storeId as Id<'stores'>;
+        }
       }
       return session;
     },

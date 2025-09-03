@@ -61,7 +61,7 @@ export default defineSchema({
   services: defineTable({
     storeId: v.id("stores"),
     name: v.string(),
-    description: v.string(),
+    description: v.optional(v.string()),
     // 価格（円）
     price: v.number(),
     // 施術時間（分）
