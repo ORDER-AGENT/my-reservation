@@ -274,5 +274,5 @@ const StoreSettingsPage = () => {
 // HOCでラップし、初期化チェックを必須にする
 export default withAuthorization(
   StoreSettingsPage,
-  { requireInitialization: true, skeletonComponent: StoreSettingsSkeleton }
+  { skeletonComponent: StoreSettingsSkeleton }
 );

@@ -22,7 +22,6 @@ const AuthSkeleton = () => (
 );
 
 interface WithAuthorizationOptions {
-  requireInitialization?: boolean;
   skeletonComponent?: React.ComponentType;
 }
 
@@ -36,7 +35,7 @@ const withAuthorization = <P extends object>(
 
     useEffect(() => {
       // 初期化チェックが不要な場合、または初期化済みの場合は、通常の権限チェックとリダイレクトを行う
-      if (!isLoading && !isAuthorized && (options?.requireInitialization ? isSystemInitialized : true)) {
+      if (!isLoading && !isAuthorized && isSystemInitialized) {
         if (isUnauthenticated) {
           router.push('/auth/signin');
         } else {
@@ -52,7 +51,7 @@ const withAuthorization = <P extends object>(
     }
 
     // 初期化が必要で、まだされていない場合、管理者登録フォームを表示
-    if (options?.requireInitialization && !isSystemInitialized) {
+    if (!isSystemInitialized) {
       return <AdminRegistrationForm />;
     }
 
