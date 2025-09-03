@@ -5,10 +5,11 @@ export interface MenuItem {
   key: string;
   icon: IconType | string;
   text: string;
-  path: string;
+  path?: string;
   roles?: string[];
   displayInFooter?: boolean;
   isExternal?: boolean;
+  children?: MenuItem[];
 }
 
 export interface Divider {

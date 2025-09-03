@@ -4,43 +4,51 @@ import React from 'react';
 import { IconType } from 'react-icons';
 import Image from 'next/image';
 import Link from 'next/link';
+import { SidebarMenuItemType } from '@/types/sidebar';
+import { FiChevronDown, FiChevronRight } from 'react-icons/fi';
 
 // SidebarMenuItemコンポーネントのPropsの型定義
 interface SidebarMenuItemProps {
-  icon: IconType | string; // IconType または URL
-  text: string; // メニュー項目テキスト
+  item: SidebarMenuItemType;
   isMenuOpen: boolean; // メニューが開いているか
   isSelected: boolean; // 選択されているか
   isHovered: boolean; // ホバーされているか
   onMouseEnter: () => void; // マウスエンター時のハンドラ
   onMouseLeave: () => void; // マウスリーブ時のハンドラ
   onClick: () => void; // クリック時のハンドラ
-  path: string; // リンク先パス
-  isExternal: boolean; // 外部リンクかどうかのフラグ
   isOverlay: boolean;
+  isSubMenuOpen?: boolean;
 }
 
 export default function SidebarMenuItem({
-  icon: Icon,
-  text,
+  item,
   isMenuOpen,
   isSelected,
   isHovered,
   onMouseEnter,
   onMouseLeave,
   onClick,
-  path,
-  isExternal,
   isOverlay,
+  isSubMenuOpen,
 }: SidebarMenuItemProps) {
-  
+  // item が undefined の場合は何もレンダリングしない
+  if (!item) {
+    return null;
+  }
+
+  // item が divider の場合は何もレンダリングしない
+  if (item.type === 'divider') {
+    return null;
+  }
+
+  const { icon: Icon, text, path, isExternal, children } = item;
+
   // メニュー項目全体のベーススタイル
   const itemBaseClasses = `
     flex items-center justify-start pl-5 relative overflow-hidden h-[40px]
     transition-all duration-[var(--sidebar-animation-duration)] ease-in-out
     ${isSelected ? 'text-primary' : 'text-secondary hover:text-accent-foreground'} // ホバー時のテキスト色を追加
   `;
-
 
   // アイコン部分のスタイル
   const iconClasses = `
@@ -66,7 +74,6 @@ export default function SidebarMenuItem({
                   `,
     onMouseEnter: onMouseEnter,
     onMouseLeave: onMouseLeave,
-    onClick: handleClick,
   };
 
   // <a>と<Link>タグの子要素を共通化
@@ -91,21 +98,35 @@ export default function SidebarMenuItem({
         )}
       </div>
       <span className={textClasses}>{text}</span>
-
-    </>
-  );
-
-  return (
-    <>
-      {isExternal ? (
-        <a href={path} target="_blank" rel="noopener noreferrer" {...commonProps}>
-          {childrenContent}
-        </a>
-      ) : (
-        <Link href={path} {...commonProps}>
-          {childrenContent}
-        </Link>
+      {children && isMenuOpen && (
+        <span className="ml-auto pr-4">
+          {isSubMenuOpen ? <FiChevronDown /> : <FiChevronRight />}
+        </span>
       )}
     </>
   );
+
+  const renderItem = () => {
+    if (isExternal) {
+      return (
+        <a href={path} target="_blank" rel="noopener noreferrer" {...commonProps} onClick={handleClick}>
+          {childrenContent}
+        </a>
+      );
+    }
+    if (children) {
+      return (
+        <div onClick={handleClick} {...commonProps} className={`${commonProps.className} cursor-pointer`}>
+          {childrenContent}
+        </div>
+      );
+    }
+    return (
+      <Link href={path || ''} {...commonProps} onClick={handleClick}>
+        {childrenContent}
+      </Link>
+    );
+  };
+
+  return renderItem();
 }

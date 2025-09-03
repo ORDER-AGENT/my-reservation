@@ -2,7 +2,13 @@ import { FaGithub } from 'react-icons/fa';
 import { HiUsers } from 'react-icons/hi2';
 import { IoDocumentsSharp } from 'react-icons/io5';
 import { TiHome } from 'react-icons/ti';
-import { RiCalendarScheduleFill, RiDashboardHorizontalFill, RiSettings5Fill } from 'react-icons/ri';
+import {
+  RiCalendarScheduleFill,
+  RiDashboardHorizontalFill,
+  RiFileList2Line,
+  RiSettings5Fill,
+  RiStore2Line,
+} from 'react-icons/ri';
 //import { BsChatDotsFill } from 'react-icons/bs';
 import { SidebarMenuItemType } from '@/types/sidebar';
 
@@ -97,9 +103,26 @@ export const allMenuItems: SidebarMenuItemType[] = [
     icon: RiSettings5Fill,
     text: '🚧設定',
     //path: '/admin/settings',
-    path: '/under-construction',
     displayInFooter: false,
     // roles: ['admin'],
+    children: [
+      {
+        type: 'item',
+        key: 'admin-settings-store',
+        icon: RiStore2Line,
+        text: '🚧店舗情報登録',
+        path: '/under-construction',
+        // roles: ['admin'],
+      },
+      {
+        type: 'item',
+        key: 'admin-settings-service-menu',
+        icon: RiFileList2Line,
+        text: '🚧サービスメニュー登録',
+        path: '/under-construction',
+        // roles: ['admin'],
+      },
+    ],
   },
   {
     type: 'divider',
