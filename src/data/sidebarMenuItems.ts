@@ -101,7 +101,7 @@ export const allMenuItems: SidebarMenuItemType[] = [
     type: 'item',
     key: 'admin-settings',
     icon: RiSettings5Fill,
-    text: '🚧設定',
+    text: '設定',
     //path: '/admin/settings',
     displayInFooter: false,
     // roles: ['admin'],
