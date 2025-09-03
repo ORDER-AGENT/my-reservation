@@ -1,4 +1,3 @@
-
 import StoreSettingsPage from './StoreSettingsPage';
 
 const Page = () => {

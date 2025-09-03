@@ -22,6 +22,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useEffect } from 'react';
 import withAuthorization from '@/components/auth/withAuthorization';
 import { Skeleton } from '@/components/ui/skeleton';
+import ContentLayout from '@/components/layout/ContentLayout';
 
 // 曜日の定義
 const daysOfWeek = [
@@ -36,7 +37,7 @@ const daysOfWeek = [
 
 // スケルトンコンポーネント
 const StoreSettingsSkeleton = () => (
-  <div className="p-4">
+  <ContentLayout>
     <Card>
       <CardHeader>
         <Skeleton className="h-8 w-1/3" />
@@ -71,7 +72,7 @@ const StoreSettingsSkeleton = () => (
         </div>
       </CardContent>
     </Card>
-  </div>
+  </ContentLayout>
 );
 
 // フォームのバリデーションスキーマ
@@ -145,8 +146,8 @@ const StoreSettingsPage = () => {
   };
 
   return (
-    <div className="p-4">
-      <Card>
+    <ContentLayout>
+      <Card className="w-full max-w-2xl mx-auto mb-8">
         <CardHeader>
           <CardTitle>店舗情報設定</CardTitle>
           <CardDescription>店舗の基本情報と営業時間を設定します。</CardDescription>
@@ -267,7 +268,7 @@ const StoreSettingsPage = () => {
           </Form>
         </CardContent>
       </Card>
-    </div>
+    </ContentLayout>
   );
 };
 
