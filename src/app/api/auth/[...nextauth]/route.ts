@@ -5,6 +5,7 @@ import { User, Session } from "next-auth";
 import { ConvexClient } from "convex/browser"; // ConvexClient を使用
 import bcrypt from "bcryptjs"; // パスワード検証用
 import { api } from "@/convex/_generated/api"; // Convex APIのインポート
+import { UserRole } from '@/types/user';
 
 // ConvexClient の初期化
 const convex = new ConvexClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -31,7 +32,7 @@ const handler = NextAuth({
           // 認証成功: ユーザーオブジェクトを返す
           // ここで返されるオブジェクトはセッションに保存されます。
           // 実際のアプリケーションでは、データベースからユーザー情報を取得します。
-          return { id: 'admin', name: '管理者', email: 'admin@example.com', roles: ['admin'] };
+          return { id: 'admin', name: '管理者', email: 'admin@example.com', role: 'admin' };
         } else {
           // 認証失敗時にエラーをスロー
           throw new Error('パスワードが間違っています。');
@@ -40,6 +41,7 @@ const handler = NextAuth({
     }),
     // メールアドレスとパスワード認証用のCredentialsProviderを追加
     CredentialsProvider({
+      id: "email-password", // プロバイダーに一意のIDを追加
       name: "Email and Password",
       credentials: {
         email: { label: "Email", type: "text" },
@@ -50,17 +52,33 @@ const handler = NextAuth({
           return null;
         }
 
-        // Convex からユーザーを取得
-        const user = await convex.query(api.auth.getUserByEmail, {
-          email: credentials.email,
-        });
+        try {
+          console.log("Attempting to authorize user with email:", credentials.email);
 
-        if (user && user.hashedPassword) {
+          // Convex からユーザーを取得
+          const user = await convex.query(api.users.getUserByEmail, {
+            email: credentials.email,
+          });
+
+          if (!user) {
+            console.log("User not found for email:", credentials.email);
+            return null;
+          }
+
+          console.log("User found:", user._id, user.email);
+
+          if (!user.hashedPassword) {
+            console.error("User has no hashedPassword:", user._id);
+            return null;
+          }
+
           // パスワードの検証
           const isValidPassword = await bcrypt.compare(
             credentials.password,
             user.hashedPassword
           );
+
+          console.log("Password validation result (isValidPassword):", isValidPassword);
 
           if (isValidPassword) {
             // 認証成功
@@ -71,10 +89,14 @@ const handler = NextAuth({
               image: user.image,
               role: user.role, // ロール情報も返す
             };
+          } else {
+            console.log("Invalid password for user:", user.email);
+            return null;
           }
+        } catch (error) {
+          console.error("Authentication error during email-password provider:", error);
+          throw new Error("認証中にエラーが発生しました。詳細についてはサーバーログを確認してください。");
         }
-        // 認証失敗
-        return null;
       },
     }),
   ],
@@ -112,7 +134,7 @@ const handler = NextAuth({
         session.user.id = token.id as string;
         session.user.name = token.name as string;
         session.user.email = token.email as string;
-        session.user.role = token.role;
+        session.user.role = token.role as UserRole;
       }
       return session;
     },

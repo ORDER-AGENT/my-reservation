@@ -41,7 +41,7 @@ export default function SignInPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setError(null); // エラーをリセット
-    const result = await signIn("credentials", {
+    const result = await signIn("email-password", {
       redirect: false, // リダイレクトを無効にする
       email: values.email,
       password: values.password,

@@ -13,8 +13,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useMutation } from 'convex/react';
-import { api } from '../../../../../convex/_generated/api';
+import { useAction } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
@@ -27,7 +27,7 @@ const formSchema = z.object({
 
 export default function AdminRegistrationForm() {
   const router = useRouter();
-  const createUser = useMutation(api.auth.createUser);
+  const createUser = useAction(api.users.createUser);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

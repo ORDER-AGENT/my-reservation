@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api"; // Convex APIのインポートパスを調整
+import { useAction } from "convex/react";
+import { api } from "@/convex/_generated/api"; // Convex APIのインポートパスを調整
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,7 +35,7 @@ export default function SignUpPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl');
-  const createUser = useMutation(api.auth.createUser); // ConvexのcreateUserミューテーション
+  const createUser = useAction(api.users.createUser);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

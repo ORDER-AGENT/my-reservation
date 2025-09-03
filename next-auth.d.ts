@@ -1,28 +1,26 @@
-import NextAuth from "next-auth";
 import { DefaultSession, DefaultUser } from 'next-auth';
+import { UserRole } from './src/types/user';
 
-declare module "next-auth" {
-  /**
-   * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
-   */
-  interface Session {
-    user?: {
-      id?: string; // idをstring | null から string に変更
-      role?: string; // rolesをroleに変更
-    } & DefaultSession['user'];
+declare module 'next-auth' {
+  interface User extends DefaultUser { // User インターフェースを拡張
+    id: string;
+    role: UserRole;
   }
 
-  interface User extends DefaultUser {
-    role?: string; // rolesをroleに変更
+  interface Session {
+    user: {
+      id: string;
+      role: UserRole;
+    } & DefaultSession['user'];
   }
 }
 
 declare module "next-auth/jwt" {
   /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
   interface JWT {
-    id?: string; // idをstring | undefined に変更
-    name?: string; // nameをstring | undefined に変更
-    email?: string; // emailをstring | undefined に変更
-    role?: string; // rolesをroleに変更
+    id?: string;
+    name?: string;
+    email?: string;
+    role?: UserRole;
   }
 } 
