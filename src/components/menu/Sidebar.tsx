@@ -39,6 +39,7 @@ export default function Sidebar({ onMenuToggleClick, isMenuOpen }: SidebarProps)
     }
   };
 
+  /*
   // ログイン/ログアウトメニュー項目をレンダリングするヘルパー関数
   const renderAuthMenuItem = (isMenuOpenForText: boolean, keyPrefix: string, isOverlay: boolean) => {
     const menuOpenState = isMenuOpenForText;
@@ -46,35 +47,48 @@ export default function Sidebar({ onMenuToggleClick, isMenuOpen }: SidebarProps)
     return isLoggedIn ? (
       <SidebarMenuItem
         key={`${keyPrefix}logout`}
-        icon={() => <TbLogout2 className="size-6" />}
-        text="管理者ログアウト"
+        item={{
+          type: 'item',
+          key: 'logout',
+          icon: () => <TbLogout2 className="size-6" />,
+          text: "管理者ログアウト",
+          path: "/",
+          isExternal: false,
+          displayInFooter: false,
+          roles: [], // 必要に応じてロールを追加
+        }}
         isMenuOpen={menuOpenState}
         isSelected={false}
         isHovered={hoveredItem === 'logout'}
         onMouseEnter={() => setHoveredItem('logout')}
         onMouseLeave={() => setHoveredItem(null)}
         onClick={() => !isOverlayVisible ? handleMenuItemClick('logout') : handleOverlayItemClick('logout')}
-        path="/"
-        isExternal={false}
         isOverlay={isOverlay}
       />
     ) : (
       <SidebarMenuItem
         key={`${keyPrefix}admin`}
-        icon={() => <TbLogin2 className="size-6" />}
-        text="管理者"
+        item={{
+          type: 'item',
+          key: 'admin',
+          icon: () => <TbLogin2 className="size-6" />,
+          text: "管理者",
+          path: "/admin",
+          isExternal: false,
+          displayInFooter: false,
+          roles: [], // 必要に応じてロールを追加
+        }}
         isMenuOpen={menuOpenState}
         isSelected={pathname === '/admin'}
         isHovered={hoveredItem === 'admin'}
         onMouseEnter={() => setHoveredItem('admin')}
         onMouseLeave={() => setHoveredItem(null)}
         onClick={() => !isOverlayVisible ? handleMenuItemClick('admin') : handleOverlayItemClick('admin')}
-        path="/admin"
-        isExternal={false}
         isOverlay={isOverlay}
       />
     );
   };
+  */
 
   useEffect(() => {
     // オーバーレイメニューの表示状態を制御
@@ -203,12 +217,12 @@ export default function Sidebar({ onMenuToggleClick, isMenuOpen }: SidebarProps)
           />
         </div>
 
-        {/* ログイン/ログアウトボタンをサイドバー全体の最下部に追加 */}
+        {/* ログイン/ログアウトボタンをサイドバー全体の最下部に追加 
         <div className="w-full h-[60px] bg-white flex items-center z-10 mt-auto">
           {
             renderAuthMenuItem(isMenuOpen && (isLargeScreen !== false), 'desktop', false)
           }
-        </div>
+        </div>*/}
       </div>
 
       {/* 小〜中画面用オーバーレイメニュー */}
@@ -225,43 +239,43 @@ export default function Sidebar({ onMenuToggleClick, isMenuOpen }: SidebarProps)
               ${isOverlayVisible ? 'translate-x-0' : '-translate-x-full'}`}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-          >
-              <SidebarHeader onMenuToggleClick={onMenuToggleClick} />
+        >
+            <SidebarHeader onMenuToggleClick={onMenuToggleClick} />
 
-              {/* メニュー項目をループでレンダリング（小画面用） */}
+            {/* メニュー項目をループでレンダリング（小画面用） */}
+            <div
+              className="flex-grow overflow-y-auto w-full flex flex-col"
+            >
+              <SidebarContent
+                menuItems={staticMenuItems}
+                hoveredItem={hoveredItem}
+                onMouseEnter={setHoveredItem}
+                onMouseLeave={setHoveredItem}
+                handleMenuItemClick={handleOverlayItemClick}
+                isMenuOpenForContent={true}
+                isOverlay={true}
+              />
+              {/* <SidebarContent
+                menuItems={dynamicMenuItems}
+                hoveredItem={hoveredItem}
+                onMouseEnter={setHoveredItem}
+                onMouseLeave={setHoveredItem}
+                handleMenuItemClick={handleOverlayItemClick}
+                isMenuOpenForContent={true}
+                isOverlay={true}
+              /> */}
+              {/* 伸縮して空白を埋めるクリック可能な領域 */}
               <div
-                className="flex-grow overflow-y-auto w-full flex flex-col"
-              >
-                <SidebarContent
-                  menuItems={staticMenuItems}
-                  hoveredItem={hoveredItem}
-                  onMouseEnter={setHoveredItem}
-                  onMouseLeave={setHoveredItem}
-                  handleMenuItemClick={handleOverlayItemClick}
-                  isMenuOpenForContent={true}
-                  isOverlay={true}
-                />
-                {/* <SidebarContent
-                  menuItems={dynamicMenuItems}
-                  hoveredItem={hoveredItem}
-                  onMouseEnter={setHoveredItem}
-                  onMouseLeave={setHoveredItem}
-                  handleMenuItemClick={handleOverlayItemClick}
-                  isMenuOpenForContent={true}
-                  isOverlay={true}
-                /> */}
-                {/* 伸縮して空白を埋めるクリック可能な領域 */}
-                <div
-                  className="flex-grow w-full cursor-pointer"
-                  onClick={handleSidebarToggle}
-                />
-              </div>
-              {/* ログイン/ログアウトボタンをサイドメニュー最下部に追加（小画面用） */}
-              <div className="w-full h-[60px] flex-shrink-0 bg-white mt-auto flex items-center">
-                {
-                  renderAuthMenuItem(true, 'mobile', true)
-                }
+                className="flex-grow w-full cursor-pointer"
+                onClick={handleSidebarToggle}
+              />
             </div>
+            {/* ログイン/ログアウトボタンをサイドメニュー最下部に追加（小画面用）
+            <div className="w-full h-[60px] flex-shrink-0 bg-white mt-auto flex items-center">
+              {
+                renderAuthMenuItem(true, 'mobile', true)
+              }
+            </div> */}
           </div>
         </>
       )}
