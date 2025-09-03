@@ -110,8 +110,8 @@ export const allMenuItems: SidebarMenuItemType[] = [
         type: 'item',
         key: 'admin-settings-store',
         icon: RiStore2Line,
-        text: '🚧店舗情報登録',
-        path: '/under-construction',
+        text: '店舗情報登録',
+        path: '/admin/settings/store',
         // roles: ['admin'],
       },
       {
