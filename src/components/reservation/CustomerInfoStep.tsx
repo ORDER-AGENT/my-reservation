@@ -55,7 +55,8 @@ export default function CustomerInfoStep({ onNextClick }: CustomerInfoStepProps)
 
   function onGuestSubmit(values: z.infer<typeof guestFormSchema>) {
     setCustomerInfo(values);
-    toast.success('お客様情報を保存しました。');
+    //toast.success('お客様情報を保存しました。');
+    onNextClick();
   }
 
   const updateCustomerInfoFromSession = useCallback(() => {
@@ -183,7 +184,7 @@ export default function CustomerInfoStep({ onNextClick }: CustomerInfoStepProps)
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full">入力内容を保存する</Button>
+                <Button type="submit" className="w-full">この情報で予約を進める</Button>
               </form>
             </Form>
           </CardContent>
