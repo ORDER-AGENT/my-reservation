@@ -51,7 +51,10 @@ export default function CustomerInfoStep({ onNextClick }: CustomerInfoStepProps)
       phone: '',
       email: '',
     },
+    mode: 'onChange', // バリデーションを即座に実行するために 'onChange' モードを設定
   });
+
+  const { isValid } = form.formState;
 
   function onGuestSubmit(values: z.infer<typeof guestFormSchema>) {
     setCustomerInfo(values);
@@ -87,109 +90,109 @@ export default function CustomerInfoStep({ onNextClick }: CustomerInfoStepProps)
 
   if (session) {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle>お客様情報の確認</CardTitle>
-          <CardDescription>現在、以下の情報でログインしています。</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="p-4 border rounded-md bg-gray-50">
-            <p><strong>氏名:</strong> {session.user?.name}</p>
-            <p><strong>メールアドレス:</strong> {session.user?.email}</p>
-          </div>
-          <p className='text-sm text-gray-600'>この情報で予約を続けますか？電話番号など、追加情報が必要な場合は、一度ログアウトしてゲストとしてご予約ください。</p>
-          <div className="flex flex-col gap-2">
-            <Button onClick={handleUseSessionInfo} className="w-full">この情報で予約を進める</Button>
-            <Button variant="outline" onClick={() => signOut({ callbackUrl: `/customer/reservation/${step}` })} className="w-full">別のアカウントでログイン</Button>
-          </div>
-        </CardContent>
-      </Card>
+        <Card className="w-full max-w-2xl mx-auto">
+          <CardHeader>
+            <CardTitle>お客様情報の確認</CardTitle>
+            <CardDescription>現在、以下の情報でログインしています。</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 border rounded-md bg-gray-50">
+              <p><strong>氏名:</strong> {session.user?.name}</p>
+              <p><strong>メールアドレス:</strong> {session.user?.email}</p>
+            </div>
+            <p className='text-sm text-gray-600'>この情報で予約を続けますか？電話番号など、追加情報が必要な場合は、一度ログアウトしてゲストとしてご予約ください。</p>
+            <div className="flex flex-col gap-2">
+              <Button onClick={handleUseSessionInfo} className="w-full">この情報で予約を進める</Button>
+              <Button variant="outline" onClick={() => signOut({ callbackUrl: `/customer/reservation/${step}` })} className="w-full">別のアカウントでログイン</Button>
+            </div>
+          </CardContent>
+        </Card>
     );
   }
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-2xl mx-auto p-4">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="login">ログイン / 新規登録</TabsTrigger>
-        <TabsTrigger value="guest">ゲストとして予約</TabsTrigger>
-      </TabsList>
-      <TabsContent value="login">
-        <Card>
-          <CardHeader>
-            <CardTitle>ログイン / 新規登録</CardTitle>
-            <CardDescription>
-              アカウントをお持ちの方はログインしてください。予約履歴の確認などができ便利です。
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className='text-sm text-gray-600'>ログインまたは新規登録を行うと、入力の手間が省け、次回の予約がよりスムーズになります。</p>
-            <div className="flex flex-col gap-2">
-                <Button asChild className="w-full">
-                    <Link href={`/auth/signin?callbackUrl=/customer/reservation/${step}`}>ログインページへ</Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full">
-                    <Link href={`/auth/signup?callbackUrl=/customer/reservation/${step}`}>新規登録ページへ</Link>
-                </Button>
-                <Separator className="my-4" />
-                <Button variant="outline" className="w-full" onClick={() => setActiveTab('guest')}>ゲストとして予約</Button>
-            </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
-      <TabsContent value="guest">
-        <Card>
-          <CardHeader>
-            <CardTitle>お客様情報の入力</CardTitle>
-            <CardDescription>ゲストとして予約される方は、以下の情報をご入力ください。</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onGuestSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>氏名</FormLabel>
-                      <FormControl>
-                        <Input placeholder="山田 太郎" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>メールアドレス</FormLabel>
-                      <FormControl>
-                        <Input placeholder="your@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>電話番号</FormLabel>
-                      <FormControl>
-                        <Input placeholder="09012345678" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full">この情報で予約を進める</Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      </TabsContent>
-    </Tabs>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-2xl mx-auto p-4">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="login">ログイン / 新規登録</TabsTrigger>
+          <TabsTrigger value="guest">ゲストとして予約</TabsTrigger>
+        </TabsList>
+        <TabsContent value="login">
+          <Card>
+            <CardHeader>
+              <CardTitle>ログイン / 新規登録</CardTitle>
+              <CardDescription>
+                アカウントをお持ちの方はログインしてください。予約履歴の確認などができ便利です。
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className='text-sm text-gray-600'>ログインまたは新規登録を行うと、入力の手間が省け、次回の予約がよりスムーズになります。</p>
+              <div className="flex flex-col gap-2">
+                  <Button asChild className="w-full">
+                      <Link href={`/auth/signin?callbackUrl=/customer/reservation/${step}`}>ログインページへ</Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full">
+                      <Link href={`/auth/signup?callbackUrl=/customer/reservation/${step}`}>新規登録ページへ</Link>
+                  </Button>
+                  <Separator className="my-4" />
+                  <Button variant="outline" className="w-full" onClick={() => setActiveTab('guest')}>ゲストとして予約</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="guest">
+          <Card>
+            <CardHeader>
+              <CardTitle>お客様情報の入力</CardTitle>
+              <CardDescription>ゲストとして予約される方は、以下の情報をご入力ください。</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onGuestSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>氏名</FormLabel>
+                        <FormControl>
+                          <Input placeholder="山田 太郎" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>メールアドレス</FormLabel>
+                        <FormControl>
+                          <Input placeholder="your@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>電話番号</FormLabel>
+                        <FormControl>
+                          <Input placeholder="09012345678" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" className="w-full" disabled={!isValid}>この情報で予約を進める</Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
   );
 }
