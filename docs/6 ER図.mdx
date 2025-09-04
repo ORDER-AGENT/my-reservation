@@ -29,7 +29,7 @@ erDiagram
         id _id PK "スタッフID"
         id userId FK "ユーザーID"
         id storeId FK "店舗ID"
-        string title "役職"
+        string title "役職 (nullable)"
         string bio "自己紹介 (nullable)"
         string imageUrl "画像URL (nullable)"
         id storageId "ストレージID (nullable)"
@@ -68,10 +68,9 @@ erDiagram
     schedules {
         id _id PK "スケジュールID"
         id staffId FK "スタッフID"
-        string date "日付"
-        string startTime "開始時間"
-        string endTime "終了時間"
-        array_object breaks "休憩時間 (nullable)"
+        array_object workingHours "勤務時間"
+        array_string specialHolidays "特別休業日 (nullable)"
+        array_object specialWorkdays "特別出勤日 (nullable)"
     }
 
     stores ||--o{ users : "所属"

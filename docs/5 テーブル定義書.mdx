@@ -53,7 +53,7 @@ title: テーブル定義書
 | スタッフID | `_id` | `Id` | No | Convexが自動生成する一意のID |
 | ユーザーID | `userId` | `Id("users")` | No | 関連する`users`テーブルのID |
 | 店舗ID | `storeId` | `Id("stores")` | No | 所属する`stores`テーブルのID |
-| 役職 | `title` | `string` | No | スタイリスト、ネイリストなど |
+| 役職 | `title` | `string` | Yes | 役職（例: スタイリスト、ネイリスト） |
 | 自己紹介 | `bio` | `string` | Yes | プロフィールページの自己紹介文 |
 | 画像URL | `imageUrl` | `string` | Yes | スタッフ個人のプロフィール画像URL |
 | ストレージID | `storageId` | `Id("_storage")` | Yes | プロフィール画像のストレージID |
@@ -117,19 +117,18 @@ title: テーブル定義書
 
 ## `schedules`
 
-スタッフの勤務スケジュールを管理するテーブル。
+スタッフの基本的な勤務パターンと、例外的な休日・出勤日を管理するテーブル。
 
 | 論理名 | 物理名 | データ型 | NULL許容 | 説明 |
 | :--- | :--- | :--- | :--- | :--- |
 | スケジュールID | `_id` | `Id` | No | Convexが自動生成する一意のID |
 | スタッフID | `staffId` | `Id("staffs")` | No | 関連するスタッフのID |
-| 日付 | `date` | `string` | No | 勤務日（"YYYY-MM-DD"形式） |
-| 開始時間 | `startTime` | `string` | No | 勤務開始時間（"HH:mm"形式） |
-| 終了時間 | `endTime` | `string` | No | 勤務終了時間（"HH:mm"形式） |
-| 休憩時間 | `breaks` | `Array<Object>` | Yes | 休憩時間（startTime, endTime）の配列 |
+| 勤務時間 | `workingHours` | `Array<Object>` | No | 曜日ごとの基本的な勤務時間（dayOfWeek, startTime, endTime）の配列 |
+| 特別休業日 | `specialHolidays` | `Array<string>` | Yes | 特定の休業日（"YYYY-MM-DD"形式）の配列 |
+| 特別出勤日 | `specialWorkdays` | `Array<Object>` | Yes | 特定の出勤日とその時間（date, startTime, endTime）の配列 |
 
 ### インデックス
-- `by_staff_and_date` (`staffId`, `date`)
+- `by_staff_id` (`staffId`)
 
 ---
 

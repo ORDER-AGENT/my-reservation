@@ -156,7 +156,7 @@ title: 基本設計書
   - `users`テーブルと1対1で関連付けられるスタッフ固有情報。
   - `userId`: 関連する`users`のID (ID)
   - `storeId`: 所属店舗ID (ID)
-  - `title`: 役職 (String)
+  - `title`: 役職 (String, Optional)
   - `bio`: 自己紹介 (String, Optional)
   - `imageUrl`: プロフィール画像URL (String, Optional)
   - `storageId`: 画像ストレージID (ID, Optional)
@@ -186,10 +186,9 @@ title: 基本設計書
   - `notes`: 顧客からのメモ (String, Optional)
 
 - **`schedules`**: 勤務スケジュール
-  - スタッフごとの勤務時間を記録し、予約可能な時間枠の算出に使用する。
+  - スタッフの基本的な勤務パターンと、例外日（特別休業日・出勤日）を管理する。
   - `staffId`: `staffs`ID (ID)
-  - `date`: 日付 (String, "YYYY-MM-DD")
-  - `startTime`: 勤務開始時間 (String, "HH:mm")
-  - `endTime`: 勤務終了時間 (String, "HH:mm")
-  - `breaks`: 休憩時間 (Array of Objects, Optional)
+  - `workingHours`: 曜日ごとの基本勤務時間 (Array of Objects)
+  - `specialHolidays`: 特定の休業日 (Array of Strings, Optional)
+  - `specialWorkdays`: 特定の出勤日と勤務時間 (Array of Objects, Optional)
 
