@@ -6,6 +6,7 @@ import { UserRole } from '@/types/user';
  */
 export const pageRoles: { [pathRegex: string]: UserRole[] } = {
   '^/admin.*': ['admin'],
+  '^/staff.*': ['admin', 'admin'],
   '^/customer.*': ['customer', 'admin'],
   // 他のページのルール...
 };

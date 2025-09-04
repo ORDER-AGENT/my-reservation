@@ -110,19 +110,30 @@ export default defineSchema({
     .index("by_reservation_number", ["reservationNumber"]),
 
   // スタッフの勤務スケジュールを格納するテーブル
-  staffSchedules: defineTable({
+  schedules: defineTable({
     staffId: v.id("staffs"),
-    // 日付 (例: "2023-10-27")
-    date: v.string(),
-    // 勤務開始時間 (例: "09:00")
-    startTime: v.string(),
-    // 勤務終了時間 (例: "18:00")
-    endTime: v.string(),
-    // 休憩時間などの予約不可時間帯
-    breaks: v.optional(
-      v.array(v.object({ startTime: v.string(), endTime: v.string() })),
+    // 曜日ごとの勤務時間を格納するフィールド
+    workingHours: v.array(
+      v.object({
+        // 0: Sunday, 1: Monday, ..., 6: Saturday
+        dayOfWeek: v.number(),
+        startTime: v.string(), // "HH:mm"
+        endTime: v.string(), // "HH:mm"
+      }),
     ),
-  }).index("by_staff_and_date", ["staffId", "date"]),
+    // 特定の休業日を格納（例: "2024-12-31"）
+    specialHolidays: v.optional(v.array(v.string())),
+    // 特定の営業日を格納
+    specialWorkdays: v.optional(
+      v.array(
+        v.object({
+          date: v.string(), // "YYYY-MM-DD"
+          startTime: v.string(), // "HH:mm"
+          endTime: v.string(), // "HH:mm"
+        }),
+      ),
+    ),
+  }).index("by_staff_id", ["staffId"]),
 /*
   // 口コミ情報を格納するテーブル
   reviews: defineTable({

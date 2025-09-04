@@ -81,9 +81,8 @@ export const allMenuItems: SidebarMenuItemType[] = [
     type: 'item',
     key: 'admin-schedule-management',
     icon: RiCalendarScheduleFill, // 必要に応じてアイコンを変更
-    text: '🚧スケジュール管理',
-    //path: '/admin/staff-schedule',
-    path: '/under-construction',
+    text: 'スケジュール管理',
+    path: '/staff/schedule',
     displayInFooter: true,
     // roles: ['admin', 'staff'],
   },
