@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 // 予約番号を生成するヘルパー関数 (簡易的なもの)
@@ -33,7 +33,7 @@ export const createGuestReservation = mutation({
       serviceId: args.serviceId,
       storeId: args.storeId,
       dateTime: args.dateTime,
-      status: "pending", // 仮予約として登録
+      status: "reserved",
       totalPrice: args.totalPrice,
       totalDuration: args.totalDuration,
       notes: args.notes,
@@ -81,7 +81,7 @@ export const createReservation = mutation({
       serviceId: args.serviceId,
       storeId: args.storeId,
       dateTime: args.dateTime,
-      status: "pending",
+      status: "reserved",
       totalPrice: args.totalPrice,
       totalDuration: args.totalDuration,
       notes: args.notes,
@@ -90,5 +90,31 @@ export const createReservation = mutation({
     });
 
     return { reservationId, reservationNumber };
+  },
+});
+
+export const getAll = query({
+  handler: async (ctx) => {
+    const reservations = await ctx.db.query('reservations').order('desc').collect();
+
+    const reservationsWithDetails = await Promise.all(
+      reservations.map(async (reservation) => {
+        const service = await ctx.db.get(reservation.serviceId);
+        const staff = await ctx.db.get(reservation.staffId);
+        const customer = reservation.customerId
+          ? await ctx.db.get(reservation.customerId)
+          : null;
+        const staffUser = staff ? await ctx.db.get(staff.userId) : null;
+
+        return {
+          ...reservation,
+          serviceName: service?.name,
+          staffName: staffUser?.name ?? 'N/A',
+          customerName: customer?.name ?? reservation.guestName,
+        };
+      })
+    );
+
+    return reservationsWithDetails;
   },
 });

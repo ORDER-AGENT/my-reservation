@@ -93,10 +93,10 @@ export default defineSchema({
     dateTime: v.number(),
     // 予約のステータス
     status: v.union(
-      v.literal("pending"),   // 仮予約
-      v.literal("confirmed"), // 確定済み
-      v.literal("cancelled"), // キャンセル済み
-      v.literal("completed"),  // 完了
+      v.literal("reserved"),      // 予約
+      v.literal("in-progress"),   // 対応中
+      v.literal("canceled"),      // キャンセル
+      v.literal("completed")      // 完了
     ),
     // 予約時点での合計料金と所要時間
     totalPrice: v.number(),
