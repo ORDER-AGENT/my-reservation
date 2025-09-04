@@ -13,33 +13,6 @@ const convex = new ConvexClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 const handler = NextAuth({
   providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials) {
-        // 環境変数から管理者パスワードを取得
-        const adminPassword = process.env.ADMIN_PASSWORD;
-
-        if (!adminPassword) {
-          console.error("ADMIN_PASSWORD is not set in environment variables.");
-          // 認証失敗時にエラーをスロー
-          throw new Error('サーバー設定エラー: 管理者パスワードが設定されていません。');
-        }
-
-        // 入力されたパスワードと環境変数のパスワードを比較
-        if (credentials?.password === adminPassword) {
-          // 認証成功: ユーザーオブジェクトを返す
-          // ここで返されるオブジェクトはセッションに保存されます。
-          // 実際のアプリケーションでは、データベースからユーザー情報を取得します。
-          return { id: 'admin', name: '管理者', email: 'admin@example.com', role: 'admin', storeId: undefined }; // admin には storeId は不要
-        } else {
-          // 認証失敗時にエラーをスロー
-          throw new Error('パスワードが間違っています。');
-        }
-      },
-    }),
     // メールアドレスとパスワード認証用のCredentialsProviderを追加
     CredentialsProvider({
       id: "email-password", // プロバイダーに一意のIDを追加
