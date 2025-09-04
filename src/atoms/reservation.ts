@@ -1,4 +1,5 @@
 import { atom } from 'jotai';
+import { atomWithStorage } from 'jotai/utils';
 import type { ServiceMenu, Staff, CustomerInfo } from '@/types/data';
 
 export type ReservationTotals = {
@@ -7,16 +8,51 @@ export type ReservationTotals = {
 };
 
 // 選択されたメニューを管理するatom
-export const selectedMenusAtom = atom<ServiceMenu[]>([]);
+export const selectedMenusAtom = atomWithStorage<ServiceMenu[]>('selectedMenus', []);
 
 // 選択されたスタッフを管理するatom
-export const selectedStaffAtom = atom<Staff | null>(null);
+export const selectedStaffAtom = atomWithStorage<Staff | null>('selectedStaff', null);
 
 // 選択された日時を管理するatom
-export const selectedDateTimeAtom = atom<Date | null>(null);
+const dateStorage = {
+  getItem: (key: string) => {
+    const str = localStorage.getItem(key);
+    return str === null ? null : new Date(str);
+  },
+  setItem: (key: string, newValue: Date | null) => {
+    localStorage.setItem(key, newValue ? newValue.toISOString() : 'null');
+  },
+  removeItem: (key: string) => {
+    localStorage.removeItem(key);
+  },
+};
+export const selectedDateTimeAtom = atomWithStorage<Date | null>(
+  'selectedDateTime',
+  null,
+  dateStorage
+);
 
 // お客様情報を管理するatom
-export const customerInfoAtom = atom<CustomerInfo | null>(null);
+const customerInfoStorage = {
+  getItem: (key: string) => {
+    const str = localStorage.getItem(key);
+    if (str === null) {
+      return null;
+    }
+    return str === 'null' ? null : JSON.parse(str);
+  },
+  setItem: (key: string, newValue: CustomerInfo | null) => {
+    localStorage.setItem(key, JSON.stringify(newValue));
+  },
+  removeItem: (key: string) => {
+    localStorage.removeItem(key);
+  },
+};
+export const customerInfoAtom = atomWithStorage<CustomerInfo | null>(
+  'customerInfo',
+  null,
+  customerInfoStorage
+);
 
 // 復元確認済みフラグを管理するatom
 export const hasCheckedForRestoreAtom = atom(false);
