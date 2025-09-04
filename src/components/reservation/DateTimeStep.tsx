@@ -16,8 +16,12 @@ import { api } from '@/convex/_generated/api';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // 日付を "YYYY-MM-DD" 形式の文字列にフォーマットするヘルパー関数
+// この関数は、ローカルタイムゾーンに基づいて日付をフォーマットします。
 const formatDate = (date: Date): string => {
-  return date.toISOString().split('T')[0];
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 月は0から始まるため+1
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 export default function DateTimeStep() {
@@ -47,6 +51,7 @@ export default function DateTimeStep() {
     () =>
       Array.from({ length: 7 }, (_, i) => {
         const date = new Date();
+        //console.log(`Debug: new Date() inside useMemo (iteration ${i}) =`, date);
         date.setHours(0, 0, 0, 0); // 時刻をリセットして日付のみで比較
         date.setDate(date.getDate() + i + weekOffset * 7);
         return date;
@@ -56,6 +61,13 @@ export default function DateTimeStep() {
 
   const startDate = formatDate(weekDates[0]);
   const endDate = formatDate(weekDates[6]);
+
+  /*
+  console.log("Debug: startDate =", startDate);
+  console.log("Debug: endDate =", endDate);
+  console.log("Debug: weekDates[0] (Date object) =", weekDates[0]);
+  console.log("Debug: weekDates[6] (Date object) =", weekDates[6]);
+  */
 
   const availableSlotsResult = useQuery(
     api.schedules.getAvailableSlots,
@@ -71,6 +83,8 @@ export default function DateTimeStep() {
   );
 
   const availableSlots = availableSlotsResult?.slots;
+
+  console.log("availableSlots", availableSlots);
 
   // その週のユニークな時間スロットをすべて取得し、ソートする
   const timeSlots = useMemo(() => {
@@ -207,11 +221,11 @@ export default function DateTimeStep() {
                       disabled={isPast || !isAvailable}
                     >
                       {isPast ? (
-                        <FaTimes className="text-slate-300" />
+                        <FaTimes className="text-slate-500" />
                       ) : isAvailable ? (
                         <FaRegCircle />
                       ) : (
-                        <FaTimes className="text-slate-300" />
+                        <FaTimes className="text-slate-500" />
                       )}
                     </Button>
                   </div>

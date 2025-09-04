@@ -1,6 +1,25 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 
+// 日付を "YYYY-MM-DD" 形式の文字列にフォーマットするヘルパー関数
+// この関数は、ローカルタイムゾーンに基づいて日付をフォーマットします。
+const formatDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 月は0から始まるため+1
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// JSTの日付文字列と時刻文字列からUTCのタイムスタンプを生成するヘルパー関数
+const getUtcTimestampFromJstString = (dateStr: string, timeStr: string): number => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const [hour, minute] = timeStr.split(':').map(Number);
+  // Dateコンストラクタはローカルタイムゾーンとして解釈する
+  const jstDateTime = new Date(year, month - 1, day, hour, minute, 0, 0);
+  // JSTからUTCへ変換（9時間引く）
+  return jstDateTime.getTime() - (9 * 60 * 60 * 1000);
+};
+
 /**
  * 指定されたスタッフのスケジュールを取得する
  * @param staffId - スタッフID
@@ -131,6 +150,17 @@ export const getAvailableSlots = query({
     const endDateTime = new Date(endDate);
     endDateTime.setHours(23, 59, 59, 999); // endDateの終わりまで
 
+    /*
+    console.log("getAvailableSlots query parameters:", {
+      staffId,
+      storeId,
+      startDate,
+      endDate,
+      duration,
+      startDateTime: formatDate(startDateTime),
+      endDateTime: formatDate(endDateTime),
+    });*/
+
     const reservations = await ctx.db
       .query("reservations")
       .withIndex("by_staff_and_time", (q) => q.eq("staffId", staffId))
@@ -143,12 +173,16 @@ export const getAvailableSlots = query({
       )
       .collect();
 
+    //console.log("reservations:", reservations);
+
     const availableSlotsByDate: Record<string, string[]> = {};
     const currentDate = new Date(startDateTime);
 
     while (currentDate <= endDateTime) {
-      const dateStr = currentDate.toISOString().split("T")[0]; // "YYYY-MM-DD"
+      const dateStr = formatDate(currentDate); // "YYYY-MM-DD"
       const dayOfWeek = currentDate.getDay();
+
+      //console.log("dateStr:", dateStr, "dayOfWeek:", dayOfWeek);
 
       // 1. 店舗の休日チェック
       if (store.specialHolidays?.includes(dateStr)) {
@@ -206,23 +240,26 @@ export const getAvailableSlots = query({
         continue;
       }
 
+      //console.log("dayStartTime:", dayStartTime, "dayEndTime:", dayEndTime);
+
       // 5. 30分単位の全スロットを生成
       const allSlots = generateTimeSlots(dayStartTime, dayEndTime);
       let availableSlots: string[] = [...allSlots];
 
+      //console.log("availableSlots:", availableSlots);
+
       // 6. 既存の予約でスロットをブロック
       for (const reservation of reservations) {
         const reservationDate = new Date(reservation.dateTime);
-        if (reservationDate.toISOString().split("T")[0] === dateStr) {
+        if (formatDate(reservationDate) === dateStr) {
           const reservationDuration = reservation.totalDuration;
           
           availableSlots = availableSlots.filter(slot => {
-            const slotStart = new Date(`${dateStr}T${slot}:00`).getTime();
+            const slotStart = getUtcTimestampFromJstString(dateStr, slot);
             const slotEnd = slotStart + 30 * 60 * 1000; // 30分スロットの終了時刻
             const reservationEnd = reservation.dateTime + reservationDuration * 60 * 1000;
-            
+
             // スロットが予約時間と重複していないかチェック
-            // (slotEnd <= reservation.dateTime) OR (slotStart >= reservationEnd)
             return slotEnd <= reservation.dateTime || slotStart >= reservationEnd;
           });
         }
@@ -236,9 +273,9 @@ export const getAvailableSlots = query({
           
           // 連続したスロットが必要な場合
           if (requiredSlotsCount > 1) {
-            const firstSlotTime = new Date(`${dateStr}T${availableSlots[index]}:00`).getTime();
+            const firstSlotTime = getUtcTimestampFromJstString(dateStr, availableSlots[index]);
             // 最後のスロットの開始時刻を取得
-            const lastSlotTime = new Date(`${dateStr}T${availableSlots[index + requiredSlotsCount - 1]}:00`).getTime();
+            const lastSlotTime = getUtcTimestampFromJstString(dateStr, availableSlots[index + requiredSlotsCount - 1]);
             
             // 連続しているかチェック（各スロットは30分間隔のはず）
             return (lastSlotTime - firstSlotTime) === (requiredSlotsCount - 1) * 30 * 60 * 1000;
