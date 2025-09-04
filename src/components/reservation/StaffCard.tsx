@@ -17,7 +17,7 @@ interface StaffCardProps {
 export default function StaffCard({ staff, isSelected, onToggle }: StaffCardProps) {
   return (
     <Card
-      key={staff.id}
+      key={staff._id}
       className={`gap-1 py-3 cursor-pointer transition-all ${
         isSelected ? 'ring-2 ring-primary' : ''
       }`}
@@ -25,19 +25,23 @@ export default function StaffCard({ staff, isSelected, onToggle }: StaffCardProp
     >
       <CardContent className="flex flex-row gap-4 items-center">
         <div className="relative w-16 h-16 flex-shrink-0">
-          {staff.avatarUrl && (
+          {staff.imageUrl ? (
             <Image
-              src={staff.avatarUrl}
-              alt={staff.name}
-              fill
-              sizes="64px"
-              style={{ objectFit: 'cover' }}
-              className="rounded-full"
+              src={staff.imageUrl}
+              alt={staff.user.name ?? ""}
+              width={64}
+              height={64}
+              className="rounded-full object-cover"
             />
+          ) : (
+            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+              <span className="text-xs text-gray-500">No Image</span>
+            </div>
           )}
+
         </div>
         <div>
-          <h3 className="text-lg font-semibold">{staff.name}</h3>
+          <h3 className="text-lg font-semibold">{staff.user.name}</h3>
         </div>
       </CardContent>
     </Card>

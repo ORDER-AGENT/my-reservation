@@ -90,3 +90,14 @@ export const createOrUpdateStore = mutation({
     }
   },
 });
+
+/**
+ * 最初の店舗情報を1件取得する
+ */
+export const getFirst = query({
+  handler: async (ctx) => {
+    // 最も単純な方法として、データベース内の最初の店舗を返す
+    const store = await ctx.db.query("stores").first();
+    return store;
+  },
+});

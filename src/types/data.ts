@@ -1,16 +1,8 @@
-export type ServiceMenu = {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  duration: number; // 施術時間（分）
-  imageUrl: string;
-};
+import { type Doc } from "@/convex/_generated/dataModel";
 
-export type Staff = {
-  id: string;
-  name: string;
-  avatarUrl: string;
+export type ServiceMenu = Doc<"services">;
+export type Staff = Doc<"staffs"> & {
+  user: Doc<"users">;
 };
 
 export type LastReservation = {

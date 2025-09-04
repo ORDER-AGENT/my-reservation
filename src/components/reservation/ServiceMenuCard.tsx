@@ -21,21 +21,26 @@ interface ServiceMenuCardProps {
 export default function ServiceMenuCard({ menu, isSelected, onToggle }: ServiceMenuCardProps) {
   return (
     <Card 
-      key={menu.id} 
+      key={menu._id} 
       className={`gap-1 py-3 flex flex-col cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary' : ''}`}
       onClick={() => onToggle(menu)}
     >
       <CardContent className="flex-grow flex flex-row gap-4 items-start justify-between">
         <div className="flex flex-row gap-4 items-start">
           <div className="relative w-16 h-16 flex-shrink-0">
-            <Image
-              src={menu.imageUrl}
-              alt={menu.name}
-              fill
-              sizes="64px"
-              style={{ objectFit: 'cover' }}
-              className="rounded-md"
-            />
+            {menu.imageUrl ? (
+              <Image
+                src={menu.imageUrl}
+                alt={menu.name}
+                width={64}
+                height={64}
+                className="rounded-md object-cover"
+              />
+            ) : (
+              <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center">
+                <span className="text-xs text-gray-500">No Image</span>
+              </div>
+            )}
           </div>
           <div>
             <p className="text-sm">{menu.description}</p>
