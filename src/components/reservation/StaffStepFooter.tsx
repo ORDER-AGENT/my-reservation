@@ -25,7 +25,7 @@ export default function StaffStepFooter({ onNextClick, onBackClick }: StaffStepF
         <div className="flex-grow text-center">
           <h2 className="md:text-lg font-semibold">選択中のスタッフ</h2>
           <p className="text-sm text-muted-foreground">
-            {selectedStaff ? selectedStaff.name : '未選択'}
+            {selectedStaff ? selectedStaff.user.name : '未選択'}
           </p>
         </div>
         <div>
