@@ -56,6 +56,7 @@ title: テーブル定義書
 | 役職 | `title` | `string` | No | スタイリスト、ネイリストなど |
 | 自己紹介 | `bio` | `string` | Yes | プロフィールページの自己紹介文 |
 | 画像URL | `imageUrl` | `string` | Yes | スタッフ個人のプロフィール画像URL |
+| ストレージID | `storageId` | `Id("_storage")` | Yes | プロフィール画像のストレージID |
 
 ### インデックス
 - `by_user_id` (`userId`)
@@ -77,6 +78,8 @@ title: テーブル定義書
 | 所要時間(分) | `duration` | `number` | No | 施術にかかる時間（分単位） |
 | カテゴリ | `category` | `string` | No | カット、カラー、トリートメントなど |
 | 提供中フラグ | `isActive` | `boolean` | No | 現在このメニューが提供中かを示すフラグ |
+| 画像URL | `imageUrl` | `string` | Yes | メニュー画像のURL |
+| ストレージID | `storageId` | `Id("_storage")` | Yes | メニュー画像のストレージID |
 
 ### インデックス
 - `by_store_id` (`storeId`)
