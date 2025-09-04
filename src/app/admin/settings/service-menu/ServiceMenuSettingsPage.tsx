@@ -22,12 +22,12 @@ import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
 import { Id } from '@/convex/_generated/dataModel';
 import { useAppSession } from '@/hooks/useAppSession';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import ContentLayout from '@/components/layout/ContentLayout';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import withAuthorization from '@/components/auth/withAuthorization';
 import { Skeleton } from '@/components/ui/skeleton';
-import { UserRole } from '@/types/user';
+import Image from 'next/image';
 
 // サービスメニューフォームのスキーマ定義
 const serviceMenuFormSchema = z.object({
@@ -37,6 +37,8 @@ const serviceMenuFormSchema = z.object({
   duration: z.number().min(1, { message: '所要時間は1分以上である必要があります。' }),
   category: z.string().min(1, { message: 'カテゴリを選択してください。' }),
   isActive: z.boolean(),
+  imageUrl: z.string().optional(),
+  storageId: z.string().optional(),
 });
 
 type ServiceMenuFormValues = z.infer<typeof serviceMenuFormSchema>;
@@ -95,10 +97,12 @@ const ServiceMenuSettingsPage = () => {
   const createServiceMenu = useMutation(api.services.create);
   const updateServiceMenu = useMutation(api.services.update);
   const serviceMenus = useQuery(api.services.get, storeId ? { storeId } : 'skip');
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
   const [editingServiceMenuId, setEditingServiceMenuId] = useState<Id<'services'> | null>(null);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [uniqueCategories, setUniqueCategories] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (serviceMenus) {
@@ -125,6 +129,8 @@ const ServiceMenuSettingsPage = () => {
       duration: 60,
       category: '',
       isActive: true,
+      imageUrl: '',
+      storageId: '',
     } satisfies ServiceMenuFormValues,
   });
 
@@ -139,10 +145,38 @@ const ServiceMenuSettingsPage = () => {
           duration: editingMenu.duration,
           category: editingMenu.category,
           isActive: editingMenu.isActive,
+          imageUrl: editingMenu.imageUrl || '',
+          storageId: editingMenu.storageId,
         } satisfies ServiceMenuFormValues);
       }
     }
   }, [editingServiceMenuId, serviceMenus, form]);
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const postUrl = await generateUploadUrl();
+      const result = await fetch(postUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+      const { storageId } = await result.json();
+      
+      form.setValue('storageId', storageId);
+      form.setValue('imageUrl', ''); 
+      toast.success('画像をアップロードしました。');
+
+    } catch (error) {
+      console.error('画像のアップロードに失敗しました:', error);
+      toast.error('画像のアップロードに失敗しました。');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   async function onSubmit(values: ServiceMenuFormValues) {
     if (!storeId) {
@@ -156,12 +190,14 @@ const ServiceMenuSettingsPage = () => {
           id: editingServiceMenuId,
           storeId,
           ...values,
+          storageId: values.storageId ? (values.storageId as Id<'_storage'>) : undefined,
         });
         toast.success('サービスメニューを更新しました。');
       } else {
         await createServiceMenu({
           storeId,
           ...values,
+          storageId: values.storageId ? (values.storageId as Id<'_storage'>) : undefined,
         });
         toast.success('新しいサービスメニューを登録しました。');
       }
@@ -288,6 +324,34 @@ const ServiceMenuSettingsPage = () => {
               </div>
               <FormField
                 control={form.control}
+                name="imageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>画像URL (任意)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="https://example.com/image.png" 
+                        {...field} 
+                        onChange={(e) => {
+                          field.onChange(e);
+                          form.setValue('storageId', '');
+                        }}
+                      />
+                    </FormControl>
+                    <FormDescription>画像のURLを直接入力するか、下のボタンからアップロードしてください。</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormItem>
+                <FormLabel>画像をアップロード</FormLabel>
+                <FormControl>
+                  <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={isUploading} />
+                </FormControl>
+                {isUploading && <p className="text-sm text-gray-500">アップロード中...</p>}
+              </FormItem>
+              <FormField
+                control={form.control}
                 name="isActive"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
@@ -307,7 +371,7 @@ const ServiceMenuSettingsPage = () => {
                 )}
               />
               <div className="flex flex-col gap-2">
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full" disabled={isUploading}>
                   {editingServiceMenuId ? 'サービスメニューを更新' : 'サービスメニューを登録'}
                 </Button>
                 {editingServiceMenuId && (
@@ -331,11 +395,26 @@ const ServiceMenuSettingsPage = () => {
             <ul className="space-y-4">
               {serviceMenus.map(menu => (
                 <li key={menu._id} className="flex items-center justify-between p-4 border rounded-md">
-                  <div>
-                    <h3 className="font-semibold">{menu.name} ({menu.category})</h3>
-                    <p className="text-sm text-gray-600">{menu.description}</p>
-                    <p className="text-sm text-gray-600">{menu.price}円 / {menu.duration}分</p>
-                    <p className="text-sm text-gray-600">{menu.isActive ? '公開中' : '非公開'}</p>
+                  <div className="flex items-center gap-4">
+                    {menu.imageUrl ? (
+                      <Image
+                        src={menu.imageUrl}
+                        alt={menu.name}
+                        width={64}
+                        height={64}
+                        className="rounded-md object-cover"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center">
+                        <span className="text-xs text-gray-500">No Image</span>
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="font-semibold">{menu.name} ({menu.category})</h3>
+                      <p className="text-sm text-gray-600">{menu.description}</p>
+                      <p className="text-sm text-gray-600">{menu.price}円 / {menu.duration}分</p>
+                      <p className="text-sm text-gray-600">{menu.isActive ? '公開中' : '非公開'}</p>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleEdit(menu._id)}>編集</Button>

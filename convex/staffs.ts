@@ -1,7 +1,5 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { Id } from "./_generated/dataModel";
-import { api } from "./_generated/api";
 
 // スタッフを作成するミューテーション
 export const create = mutation({
@@ -11,6 +9,7 @@ export const create = mutation({
     title: v.optional(v.string()),
     bio: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
+    storageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
     const staffId = await ctx.db.insert("staffs", args);
@@ -25,9 +24,14 @@ export const update = mutation({
     title: v.optional(v.string()),
     bio: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
+    storageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
     const { staffId, ...rest } = args;
+    const existingStaff = await ctx.db.get(staffId);
+    if (existingStaff?.storageId && existingStaff.storageId !== args.storageId) {
+      await ctx.storage.delete(existingStaff.storageId);
+    }
     await ctx.db.patch(staffId, rest);
   },
 });
@@ -41,6 +45,7 @@ export const createStaffWithUser = mutation({
     title: v.optional(v.string()),
     bio: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
+    storageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
     // ユーザーを登録 (パスワードは仮で設定し、後でユーザー自身が設定できるようにする)
@@ -60,6 +65,7 @@ export const createStaffWithUser = mutation({
       title: args.title,
       bio: args.bio,
       imageUrl: args.imageUrl,
+      storageId: args.storageId,
     });
 
     return staffId;
@@ -76,14 +82,20 @@ export const updateStaffWithUser = mutation({
     title: v.optional(v.string()),
     bio: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
+    storageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
-    const { staffId, storeId, name, email, title, bio, imageUrl } = args;
+    const { staffId, storeId, name, email, title, bio, imageUrl, storageId } = args;
 
     // スタッフ情報を取得
     const existingStaff = await ctx.db.get(staffId);
     if (!existingStaff) {
       throw new Error("Staff not found.");
+    }
+
+    // 古いファイルを削除
+    if (existingStaff.storageId && existingStaff.storageId !== storageId) {
+      await ctx.storage.delete(existingStaff.storageId);
     }
 
     // ユーザー情報を更新
@@ -99,6 +111,7 @@ export const updateStaffWithUser = mutation({
       title,
       bio,
       imageUrl,
+      storageId,
     });
   },
 });
@@ -115,6 +128,11 @@ export const deleteStaffWithUser = mutation({
     const existingStaff = await ctx.db.get(staffId);
     if (!existingStaff) {
       throw new Error("Staff not found.");
+    }
+
+    // ストレージからファイルを削除
+    if (existingStaff.storageId) {
+      await ctx.storage.delete(existingStaff.storageId);
     }
 
     // 関連するユーザーを削除
@@ -146,7 +164,13 @@ export const getStaffsWithUsers = query({
           console.warn(`User with ID ${staff.userId} not found for staff ${staff._id}`);
           return null;
         }
-        return { ...staff, user };
+
+        // storageId から imageUrl を動的に生成
+        const imageUrl = staff.storageId
+          ? await ctx.storage.getUrl(staff.storageId)
+          : staff.imageUrl;
+
+        return { ...staff, user, imageUrl: imageUrl ?? undefined };
       }),
     );
 

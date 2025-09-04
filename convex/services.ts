@@ -7,10 +7,21 @@ export const get = query({
     storeId: v.id('stores'),
   },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const services = await ctx.db
       .query('services')
       .withIndex('by_store_id', q => q.eq('storeId', args.storeId))
       .collect();
+
+    // storageId があれば imageUrl を動的に生成して返す
+    return Promise.all(
+      services.map(async (service) => {
+        if (service.storageId) {
+          const imageUrl = await ctx.storage.getUrl(service.storageId);
+          return { ...service, imageUrl };
+        }
+        return service;
+      })
+    );
   },
 });
 
@@ -20,7 +31,16 @@ export const getById = query({
     id: v.id('services'),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+    const service = await ctx.db.get(args.id);
+    if (!service) {
+      return null;
+    }
+    // storageId があれば imageUrl を動的に生成して返す
+    if (service.storageId) {
+      const imageUrl = await ctx.storage.getUrl(service.storageId);
+      return { ...service, imageUrl };
+    }
+    return service;
   },
 });
 
@@ -34,6 +54,8 @@ export const create = mutation({
     duration: v.number(),
     category: v.string(),
     isActive: v.boolean(),
+    imageUrl: v.optional(v.string()),
+    storageId: v.optional(v.id('_storage')),
   },
   handler: async (ctx, args) => {
     const newServiceMenuId = await ctx.db.insert('services', {
@@ -44,6 +66,8 @@ export const create = mutation({
       duration: args.duration,
       category: args.category,
       isActive: args.isActive,
+      imageUrl: args.imageUrl,
+      storageId: args.storageId,
     });
     return newServiceMenuId;
   },
@@ -60,9 +84,20 @@ export const update = mutation({
     duration: v.number(),
     category: v.string(),
     isActive: v.boolean(),
+    imageUrl: v.optional(v.string()),
+    storageId: v.optional(v.id('_storage')),
   },
   handler: async (ctx, args) => {
     const { id, ...rest } = args;
+
+    // 更新前のドキュメントを取得
+    const existingService = await ctx.db.get(id);
+
+    // storageId が変更された、または imageUrl が直接指定されて storageId が不要になった場合、古いファイルを削除
+    if (existingService?.storageId && existingService.storageId !== args.storageId) {
+      await ctx.storage.delete(existingService.storageId);
+    }
+
     await ctx.db.patch(id, rest);
   },
 });
@@ -73,6 +108,13 @@ export const remove = mutation({
     id: v.id('services'),
   },
   handler: async (ctx, args) => {
+    // 削除前にドキュメントを取得して storageId を確認
+    const service = await ctx.db.get(args.id);
+    if (service?.storageId) {
+      // ストレージからファイルを削除
+      await ctx.storage.delete(service.storageId);
+    }
+    // データベースからドキュメントを削除
     await ctx.db.delete(args.id);
   },
 });

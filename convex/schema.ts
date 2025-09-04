@@ -53,6 +53,7 @@ export default defineSchema({
     bio: v.optional(v.string()),
     // プロフィール画像のURL
     imageUrl: v.optional(v.string()),
+    storageId: v.optional(v.id("_storage")),
   })
     .index("by_user_id", ["userId"])
     .index("by_store_id", ["storeId"]),
@@ -70,6 +71,9 @@ export default defineSchema({
     category: v.string(),
     // メニューが現在提供中かどうか
     isActive: v.boolean(),
+    // 画像URL
+    imageUrl: v.optional(v.string()),
+    storageId: v.optional(v.id("_storage")),
   }).index("by_store_id", ["storeId"]),
 
   // 予約情報を格納するテーブル

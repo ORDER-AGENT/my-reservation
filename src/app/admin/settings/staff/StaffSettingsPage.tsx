@@ -23,7 +23,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -34,7 +33,7 @@ import { useEffect, useRef, useState } from 'react';
 import ContentLayout from '@/components/layout/ContentLayout';
 import withAuthorization from '@/components/auth/withAuthorization';
 import { Skeleton } from '@/components/ui/skeleton';
-import { UserRole } from '@/types/user';
+import Image from 'next/image';
 
 // スタッフフォームのスキーマ定義
 const staffFormSchema = z.object({
@@ -42,7 +41,8 @@ const staffFormSchema = z.object({
   email: z.string().email({ message: '有効なメールアドレスを入力してください。' }),
   title: z.string().optional(),
   bio: z.string().optional(),
-  imageUrl: z.string().url({ message: '有効なURLを入力してください。' }).optional().or(z.literal('')),
+  imageUrl: z.string().optional(),
+  storageId: z.string().optional(),
 });
 
 type StaffFormValues = z.infer<typeof staffFormSchema>;
@@ -97,14 +97,15 @@ const StaffSettingsPage = () => {
   const { session } = useAppSession();
   const storeId = session?.user.storeId as Id<'stores'> | undefined;
 
-  // Convex API の呼び出し (後で定義)
   const createStaff = useMutation(api.staffs.createStaffWithUser);
   const updateStaff = useMutation(api.staffs.updateStaffWithUser);
   const staffs = useQuery(api.staffs.getStaffsWithUsers, storeId ? { storeId } : 'skip');
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
   const [editingStaffId, setEditingStaffId] = useState<Id<'staffs'> | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [staffToDelete, setStaffToDelete] = useState<Id<'staffs'> | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const formCardRef = useRef<HTMLDivElement>(null);
 
@@ -116,6 +117,7 @@ const StaffSettingsPage = () => {
       title: '',
       bio: '',
       imageUrl: '',
+      storageId: '',
     } satisfies StaffFormValues,
   });
 
@@ -129,10 +131,37 @@ const StaffSettingsPage = () => {
           title: editingStaff.title,
           bio: editingStaff.bio || '',
           imageUrl: editingStaff.imageUrl || '',
+          storageId: editingStaff.storageId,
         } satisfies StaffFormValues);
       }
     }
   }, [editingStaffId, staffs, form]);
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const postUrl = await generateUploadUrl();
+      const result = await fetch(postUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+      const { storageId } = await result.json();
+      
+      form.setValue('storageId', storageId);
+      form.setValue('imageUrl', '');
+      toast.success('画像をアップロードしました。');
+
+    } catch (error) {
+      console.error('画像のアップロードに失敗しました:', error);
+      toast.error('画像のアップロードに失敗しました。');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   async function onSubmit(values: StaffFormValues) {
     if (!storeId) {
@@ -145,21 +174,15 @@ const StaffSettingsPage = () => {
         await updateStaff({
           staffId: editingStaffId,
           storeId,
-          name: values.name,
-          email: values.email,
-          title: values.title,
-          bio: values.bio,
-          imageUrl: values.imageUrl,
+          ...values,
+          storageId: values.storageId ? (values.storageId as Id<'_storage'>) : undefined,
         });
         toast.success('スタッフ情報を更新しました。');
       } else {
         await createStaff({
           storeId,
-          name: values.name,
-          email: values.email,
-          title: values.title,
-          bio: values.bio,
-          imageUrl: values.imageUrl,
+          ...values,
+          storageId: values.storageId ? (values.storageId as Id<'_storage'>) : undefined,
         });
         toast.success('新しいスタッフを登録しました。');
       }
@@ -273,15 +296,29 @@ const StaffSettingsPage = () => {
                   <FormItem>
                     <FormLabel>プロフィール画像URL (任意)</FormLabel>
                     <FormControl>
-                      <Input placeholder="例: https://example.com/staff_image.jpg" {...field} />
+                      <Input 
+                        placeholder="https://example.com/staff_image.jpg" 
+                        {...field} 
+                        onChange={(e) => {
+                          field.onChange(e);
+                          form.setValue('storageId', '');
+                        }}
+                      />
                     </FormControl>
-                    <FormDescription>スタッフのプロフィール画像のURLを入力します。</FormDescription>
+                    <FormDescription>画像のURLを直接入力するか、下のボタンからアップロードしてください。</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              <FormItem>
+                <FormLabel>画像をアップロード</FormLabel>
+                <FormControl>
+                  <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={isUploading} />
+                </FormControl>
+                {isUploading && <p className="text-sm text-gray-500">アップロード中...</p>}
+              </FormItem>
               <div className="flex flex-col gap-2">
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full" disabled={isUploading}>
                   {editingStaffId ? 'スタッフ情報を更新' : 'スタッフを登録'}
                 </Button>
                 {editingStaffId && (
@@ -316,12 +353,27 @@ const StaffSettingsPage = () => {
         <CardContent>
           {staffs && staffs.length > 0 ? (
             <ul className="space-y-4">
-              {staffs.map(staff => (
+              {staffs.filter((staff) => staff !== null).map(staff => (
                 <li key={staff!._id} className="flex items-center justify-between p-4 border rounded-md">
-                  <div>
-                    <h3 className="font-semibold">{staff!.user.name} ({staff!.title})</h3>
-                    <p className="text-sm text-gray-600">{staff!.user.email}</p>
-                    <p className="text-sm text-gray-600">{staff!.bio}</p>
+                  <div className="flex items-center gap-4">
+                    {staff.imageUrl ? (
+                      <Image
+                        src={staff.imageUrl}
+                        alt={staff.user.name || 'スタッフ画像'}
+                        width={64}
+                        height={64}
+                        className="rounded-full object-cover w-16 h-16"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                        <span className="text-xs text-gray-500">No Image</span>
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="font-semibold">{staff!.user.name} ({staff!.title})</h3>
+                      <p className="text-sm text-gray-600">{staff!.user.email}</p>
+                      <p className="text-sm text-gray-600">{staff!.bio}</p>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleEdit(staff!._id)}>編集</Button>
