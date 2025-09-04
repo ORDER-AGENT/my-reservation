@@ -17,7 +17,7 @@ export const get = query({
       services.map(async (service) => {
         if (service.storageId) {
           const imageUrl = await ctx.storage.getUrl(service.storageId);
-          return { ...service, imageUrl };
+          return { ...service, imageUrl: imageUrl ?? undefined };
         }
         return service;
       })
@@ -38,7 +38,7 @@ export const getById = query({
     // storageId があれば imageUrl を動的に生成して返す
     if (service.storageId) {
       const imageUrl = await ctx.storage.getUrl(service.storageId);
-      return { ...service, imageUrl };
+      return { ...service, imageUrl: imageUrl ?? undefined };
     }
     return service;
   },
