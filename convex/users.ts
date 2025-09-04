@@ -20,16 +20,20 @@ export const getUsersCount = query({
 // DB にユーザーを挿入する mutation
 export const insertUser = mutation({
   args: {
+    name: v.optional(v.string()),
     email: v.string(),
     hashedPassword: v.string(),
     role: v.union(v.literal("customer"), v.literal("staff"), v.literal("admin")),
+    storeId: v.optional(v.id("stores")),
   },
   handler: async (ctx, args) => {
     const userId = await ctx.db.insert("users", {
+      name: args.name,
       email: args.email,
       hashedPassword: args.hashedPassword,
       tokenIdentifier: `https://${process.env.CONVEX_URL}|${args.email}`,
       role: args.role,
+      storeId: args.storeId,
     });
     return userId;
   },
@@ -49,14 +53,40 @@ export const getUserByEmail = query({
 });
 
 export const createUser = action({
-  args: { email: v.string(), password: v.string(), role: v.union(v.literal("customer"), v.literal("staff"), v.literal("admin")) },
+  args: {
+    name: v.optional(v.string()),
+    email: v.string(),
+    password: v.string(),
+    role: v.union(v.literal("customer"), v.literal("staff"), v.literal("admin")),
+    storeId: v.optional(v.id("stores")),
+  },
   handler: async (ctx, args): Promise<Id<"users">> => {
     const existingUser = await ctx.runQuery(api.users.getUserByEmail, { email: args.email });
     if (existingUser) throw new Error("User already exists.");
 
     const hashedPassword = await bcrypt.hash(args.password, 10);
-    const userId: Id<"users"> = await ctx.runMutation(api.users.insertUser, { email: args.email, hashedPassword, role: args.role });
+    const userId: Id<"users"> = await ctx.runMutation(api.users.insertUser, {
+      name: args.name,
+      email: args.email,
+      hashedPassword,
+      role: args.role,
+      storeId: args.storeId,
+    });
 
     return userId;
+  },
+});
+
+export const updateUser = mutation({
+  args: {
+    userId: v.id("users"),
+    name: v.optional(v.string()),
+    email: v.optional(v.string()),
+    role: v.optional(v.union(v.literal("customer"), v.literal("staff"), v.literal("admin"))),
+    storeId: v.optional(v.id("stores")),
+  },
+  handler: async (ctx, args) => {
+    const { userId, ...rest } = args;
+    await ctx.db.patch(userId, rest);
   },
 });

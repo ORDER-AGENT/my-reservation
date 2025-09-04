@@ -48,7 +48,7 @@ export default defineSchema({
     userId: v.id("users"),
     storeId: v.id("stores"),
     // 役職（例: スタイリスト、ネイリスト）
-    title: v.string(),
+    title: v.optional(v.string()),
     // 自己紹介
     bio: v.optional(v.string()),
     // プロフィール画像のURL

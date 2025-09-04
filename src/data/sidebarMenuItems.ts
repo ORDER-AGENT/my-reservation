@@ -122,6 +122,14 @@ export const allMenuItems: SidebarMenuItemType[] = [
         path: '/admin/settings/service-menu',
         // roles: ['admin'],
       },
+      {
+        type: 'item',
+        key: 'admin-settings-staff',
+        icon: HiUsers,
+        text: 'スタッフ登録',
+        path: '/admin/settings/staff',
+        // roles: ['admin'],
+      },
     ],
   },
   {
