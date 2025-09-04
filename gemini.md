@@ -21,3 +21,7 @@
 ## レスポンシブデザイン
 
 - モバイル表示の判定には `src/hooks/useMediaQuery.ts` の `useIsMobile` フックを使用してください。
+
+## Convex インポートパス
+
+- Convexのインポートは、`@/convex/_generated/api` のように、パスエイリアス `@/convex` を使用してください。
