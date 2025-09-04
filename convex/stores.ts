@@ -6,22 +6,12 @@ import { action, internalMutation, internalQuery, mutation, query } from './_gen
  * ストア情報を取得する
  */
 export const getStore = query({
-  args: {},
-  handler: async (ctx) => {
-    /*
-    // 認証されたユーザー情報を取得
-    const identity = await ctx.auth.getUserIdentity();
-    // 認証されていない場合はエラー
-    if (!identity) {
-      throw new ConvexError('Not authenticated');
-    }
-    */
-
-    // ユーザーのメールアドレスからユーザー情報を取得
-    const user = await ctx.db
-      .query('users')
-      //.withIndex('by_email', (q) => q.eq('email', identity.email!))
-      .unique();
+  args: {
+    userId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    // ユーザーIDからユーザー情報を取得
+    const user = await ctx.db.get(args.userId);
 
     // ユーザーが存在しない場合はエラー
     if (!user) {
@@ -51,6 +41,7 @@ export const getStore = query({
  */
 export const createOrUpdateStore = mutation({
   args: {
+    userId: v.id('users'),
     name: v.string(),
     address: v.string(),
     phone: v.string(),
@@ -64,18 +55,8 @@ export const createOrUpdateStore = mutation({
     specialHolidays: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    /*
-    // 認証されたユーザー情報を取得
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError('Not authenticated');
-    }
-    */
     // ユーザー情報を取得
-    const user = await ctx.db
-      .query('users')
-      //.withIndex('by_email', (q) => q.eq('email', identity.email!))
-      .unique();
+    const user = await ctx.db.get(args.userId);
 
     if (!user) {
       throw new ConvexError('User not found');

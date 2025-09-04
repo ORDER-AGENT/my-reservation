@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useMutation, useQuery } from 'convex/react';
-import { api } from '../../../../../convex/_generated/api';
+import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -23,6 +23,8 @@ import { useEffect } from 'react';
 import withAuthorization from '@/components/auth/withAuthorization';
 import { Skeleton } from '@/components/ui/skeleton';
 import ContentLayout from '@/components/layout/ContentLayout';
+import { useAppSession } from '@/hooks/useAppSession';
+import { Id } from '@/convex/_generated/dataModel';
 
 // 曜日の定義
 const daysOfWeek = [
@@ -38,7 +40,7 @@ const daysOfWeek = [
 // スケルトンコンポーネント
 const StoreSettingsSkeleton = () => (
   <ContentLayout>
-    <Card>
+    <Card className="w-full max-w-2xl mx-auto mb-8">
       <CardHeader>
         <Skeleton className="h-8 w-1/3" />
         <Skeleton className="h-4 w-2/3 mt-2" />
@@ -92,8 +94,11 @@ const formSchema = z.object({
 
 // ページコンポーネント本体
 const StoreSettingsPage = () => {
+  const { session, status } = useAppSession();
+  const userId = session?.user?.id;
+
   // Convexから店舗情報を取得 (認証されている場合のみ)
-  const store =useQuery(api.stores.getStore);
+  const store = useQuery(api.stores.getStore, userId ? { userId: userId as Id<'users'> } : 'skip');
   // Convexのmutationを呼び出すためのフック
   const createOrUpdateStore = useMutation(api.stores.createOrUpdateStore);
 
@@ -129,10 +134,16 @@ const StoreSettingsPage = () => {
 
   // フォーム送信時の処理
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!userId) {
+      toast.error('ユーザーが認証されていません');
+      return;
+    }
+
     try {
       const openingHours = values.openingHours?.filter(oh => values.enabledDays?.includes(oh.dayOfWeek));
 
       await createOrUpdateStore({
+        userId: userId as Id<'users'>,
         name: values.name,
         address: values.address,
         phone: values.phone,
