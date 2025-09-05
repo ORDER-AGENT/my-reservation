@@ -24,7 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useMutation, useQuery } from 'convex/react';
+import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
 import { Id } from '@/convex/_generated/dataModel';
@@ -39,10 +39,42 @@ import Image from 'next/image';
 const staffFormSchema = z.object({
   name: z.string().min(1, { message: 'スタッフ名を入力してください。' }),
   email: z.string().email({ message: '有効なメールアドレスを入力してください。' }),
+  password: z.string().min(6, { message: "パスワードは6文字以上である必要があります。" }).optional(), // 新規登録時のみ必須
+  confirmPassword: z.string().optional(), // 新規登録時のみ必須
+  currentPassword: z.string().optional(), // パスワード変更時のみ使用
+  newPassword: z.string().min(6, { message: "新しいパスワードは6文字以上である必要があります。" }).optional(), // パスワード変更時のみ使用
+  confirmNewPassword: z.string().optional(), // パスワード変更時のみ使用
   title: z.string().optional(),
   bio: z.string().optional(),
   imageUrl: z.string().optional(),
   storageId: z.string().optional(),
+}).refine((data) => {
+  // 新規登録時、またはパスワードが入力された場合にのみパスワードの一致を検証
+  if (data.password || data.confirmPassword) {
+    return data.password === data.confirmPassword;
+  }
+  return true; // パスワードが入力されていない場合は検証しない
+}, {
+  message: "パスワードが一致しません。",
+  path: ["confirmPassword"],
+}).refine((data) => {
+  // パスワード変更時、新しいパスワードが入力された場合にのみ検証
+  if (data.newPassword || data.confirmNewPassword) {
+    return data.newPassword === data.confirmNewPassword;
+  }
+  return true; // 新しいパスワードが入力されていない場合は検証しない
+}, {
+  message: "新しいパスワードが一致しません。",
+  path: ["confirmNewPassword"],
+}).refine((data) => {
+  // 新しいパスワードが入力された場合、現在のパスワードも必須
+  if (data.newPassword && !data.currentPassword) {
+    return false;
+  }
+  return true;
+}, {
+  message: "現在のパスワードを入力してください。",
+  path: ["currentPassword"],
 });
 
 type StaffFormValues = z.infer<typeof staffFormSchema>;
@@ -97,10 +129,11 @@ const StaffSettingsPage = () => {
   const { session } = useAppSession();
   const storeId = session?.user.storeId as Id<'stores'> | undefined;
 
-  const createStaff = useMutation(api.staffs.createStaffWithUser);
+  const createStaff = useAction(api.staffs.createStaffWithUser);
   const updateStaff = useMutation(api.staffs.updateStaffWithUser);
   const staffs = useQuery(api.staffs.getStaffsWithUsers, storeId ? { storeId } : 'skip');
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const updateStaffPassword = useAction(api.users.updateUserPassword);
 
   const [editingStaffId, setEditingStaffId] = useState<Id<'staffs'> | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -114,6 +147,11 @@ const StaffSettingsPage = () => {
     defaultValues: {
       name: '',
       email: '',
+      password: '',
+      confirmPassword: '',
+      currentPassword: '',
+      newPassword: '',
+      confirmNewPassword: '',
       title: '',
       bio: '',
       imageUrl: '',
@@ -128,10 +166,10 @@ const StaffSettingsPage = () => {
         form.reset({
           name: editingStaff.user.name || '',
           email: editingStaff.user.email,
-          title: editingStaff.title,
+          title: editingStaff.title || '',
           bio: editingStaff.bio || '',
           imageUrl: editingStaff.imageUrl || '',
-          storageId: editingStaff.storageId,
+          storageId: editingStaff.storageId || '',
         } satisfies StaffFormValues);
       }
     }
@@ -171,17 +209,62 @@ const StaffSettingsPage = () => {
 
     try {
       if (editingStaffId) {
-        await updateStaff({
-          staffId: editingStaffId,
-          storeId,
-          ...values,
-          storageId: values.storageId ? (values.storageId as Id<'_storage'>) : undefined,
-        });
-        toast.success('スタッフ情報を更新しました。');
+        // パスワード変更の処理
+        if (values.newPassword) {
+          if (!values.currentPassword) {
+            toast.error("現在のパスワードを入力してください。");
+            return;
+          }
+          if (values.newPassword !== values.confirmNewPassword) {
+            toast.error("新しいパスワードが一致しません。");
+            return;
+          }
+
+          // 編集中のスタッフの userId を取得
+          const editingStaff = staffs?.find(staff => staff!._id === editingStaffId);
+          if (!editingStaff || !editingStaff.userId) {
+            toast.error("スタッフ情報が見つかりませんでした。");
+            return;
+          }
+
+          // パスワード更新アクションを呼び出す
+          await updateStaffPassword({
+            userId: editingStaff.userId,
+            currentPassword: values.currentPassword,
+            newPassword: values.newPassword,
+          });
+          toast.success("パスワードを更新しました。");
+          // パスワード更新が成功したら、スタッフ情報更新のトーストは表示しない
+          await updateStaff({
+            staffId: editingStaffId,
+            storeId,
+            name: values.name,
+            email: values.email,
+            title: values.title,
+            bio: values.bio,
+            imageUrl: values.imageUrl,
+            storageId: values.storageId ? (values.storageId as Id<'_storage'>) : undefined,
+          });
+        } else {
+          // パスワードが変更されていない場合のみ、スタッフ情報更新のトーストを表示
+          await updateStaff({
+            staffId: editingStaffId,
+            storeId,
+            name: values.name,
+            email: values.email,
+            title: values.title,
+            bio: values.bio,
+            imageUrl: values.imageUrl,
+            storageId: values.storageId ? (values.storageId as Id<'_storage'>) : undefined,
+          });
+          toast.success('スタッフ情報を更新しました。');
+        }
       } else {
+        // 新規登録時のみパスワードを渡す
         await createStaff({
           storeId,
           ...values,
+          password: values.password!,
           storageId: values.storageId ? (values.storageId as Id<'_storage'>) : undefined,
         });
         toast.success('新しいスタッフを登録しました。');
@@ -262,6 +345,79 @@ const StaffSettingsPage = () => {
                   </FormItem>
                 )}
               />
+              {!editingStaffId ? ( // 新規登録時のみパスワードフィールドを表示
+                <>
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>パスワード</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="********" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>パスワード（確認）</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="********" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              ) : ( // 編集時のみパスワード変更フィールドを表示
+                <>
+                  <h3 className="text-lg font-semibold mt-6 mb-2">パスワード変更</h3>
+                  <FormField
+                    control={form.control}
+                    name="currentPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>現在のパスワード</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="現在のパスワード" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="newPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>新しいパスワード</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="新しいパスワード" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="confirmNewPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>新しいパスワード（確認）</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="新しいパスワード（確認）" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
               <FormField
                 control={form.control}
                 name="title"

@@ -1,5 +1,7 @@
-import { mutation, query } from "./_generated/server";
+import { action, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 
 // スタッフを作成するミューテーション
 export const create = mutation({
@@ -37,29 +39,29 @@ export const update = mutation({
 });
 
 // ユーザー情報と紐付けてスタッフを作成するミューテーション (StaffSettingsPage.tsx から呼び出される)
-export const createStaffWithUser = mutation({
+export const createStaffWithUser = action({
   args: {
     storeId: v.id("stores"),
     name: v.optional(v.string()),
     email: v.string(),
+    password: v.string(),
     title: v.optional(v.string()),
     bio: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
     storageId: v.optional(v.id("_storage")),
   },
-  handler: async (ctx, args) => {
-    // ユーザーを登録 (パスワードは仮で設定し、後でユーザー自身が設定できるようにする)
-    const userId = await ctx.db.insert("users", {
+  handler: async (ctx, args): Promise<Id<"staffs">> => {
+    // ユーザーを登録
+    const userId: Id<"users"> = await ctx.runAction(api.users.createUser, {
       name: args.name,
       email: args.email,
-      hashedPassword: "", // 仮のパスワード。実際には招待フローなどで設定させる
-      tokenIdentifier: `https://${process.env.CONVEX_URL}|${args.email}`,
+      password: args.password,
       role: "staff",
       storeId: args.storeId,
     });
 
     // スタッフ情報を登録
-    const staffId = await ctx.db.insert("staffs", {
+    const staffId = await ctx.runMutation(api.staffs.create, {
       userId,
       storeId: args.storeId,
       title: args.title,
@@ -112,6 +114,30 @@ export const updateStaffWithUser = mutation({
       bio,
       imageUrl,
       storageId,
+    });
+  },
+});
+
+// スタッフのパスワードを更新するミューテーション
+export const updateStaffPassword = action({
+  args: {
+    staffId: v.id("staffs"),
+    currentPassword: v.string(),
+    newPassword: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { staffId, currentPassword, newPassword } = args;
+
+    const existingStaff = await ctx.runQuery(api.staffs.getStaff, { staffId });
+    if (!existingStaff) {
+      throw new Error("Staff not found.");
+    }
+
+    // ユーザーのパスワードを更新
+    await ctx.runAction(api.users.updateUserPassword, {
+      userId: existingStaff.userId,
+      currentPassword,
+      newPassword,
     });
   },
 });
@@ -176,5 +202,15 @@ export const getStaffsWithUsers = query({
 
     // null を除外して返す
     return staffsWithUsers.filter(Boolean);
+  },
+});
+
+// 特定のスタッフを取得するクエリ
+export const getStaff = query({
+  args: {
+    staffId: v.id("staffs"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.staffId);
   },
 });

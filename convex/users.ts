@@ -1,9 +1,9 @@
-import { action, mutation, query } from "./_generated/server";
+import { action, internalAction, mutation, internalMutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 import { api } from "./_generated/api";
-import bcrypt from "bcryptjs";
-import { Id } from "./_generated/dataModel"; // Id 型をインポート
+import { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 
 /**
  * 登録されているユーザーの総数を取得する
@@ -64,7 +64,12 @@ export const createUser = action({
     const existingUser = await ctx.runQuery(api.users.getUserByEmail, { email: args.email });
     if (existingUser) throw new Error("User already exists.");
 
-    const hashedPassword = await bcrypt.hash(args.password, 10);
+    // internalAction を呼び出してハッシュ化
+    const hashedPassword = await ctx.runAction(internal.auth.hashPassword, {
+      password: args.password,
+    });
+
+
     const userId: Id<"users"> = await ctx.runMutation(api.users.insertUser, {
       name: args.name,
       email: args.email,
@@ -90,3 +95,67 @@ export const updateUser = mutation({
     await ctx.db.patch(userId, rest);
   },
 });
+
+export const getUser = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.userId);
+  },
+});
+
+export const updateUserHashedPassword = mutation({
+  args: {
+    userId: v.id("users"),
+    hashedPassword: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.userId, {
+      hashedPassword: args.hashedPassword,
+    });
+  },
+});
+
+export const updateUserPassword = action({
+  args: {
+    userId: v.id("users"),
+    currentPassword: v.string(),
+    newPassword: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { userId, currentPassword, newPassword } = args;
+
+    const user = await ctx.runQuery(api.users.getUser, { userId });
+    if (!user) {
+      throw new Error("User not found.");
+    }
+
+    // hashedPassword が存在することを確認
+    if (user.hashedPassword === undefined) {
+      throw new Error("User does not have a password set.");
+    }
+    
+    // 現在のパスワードを検証
+    const isMatch = await ctx.runAction(internal.auth.verifyPassword, {
+      password: currentPassword,
+      hashedPassword: user.hashedPassword,
+    });
+
+    if (!isMatch) {
+      throw new Error("Invalid current password.");
+    }
+
+    // 新しいパスワードをハッシュ化
+    const newHashedPassword = await ctx.runAction(internal.auth.hashPassword, {
+      password: newPassword,
+    });
+
+    // パスワードを更新
+    await ctx.runMutation(api.users.updateUserHashedPassword, {
+      userId,
+      hashedPassword: newHashedPassword,
+    });
+  },
+});
+
