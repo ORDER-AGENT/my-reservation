@@ -15,7 +15,7 @@ import { stepOrder } from '@/types/reservation';
 import ReservationNavigationContext from '@/contexts/ReservationNavigationContext';
 
 
-const ReservationLayoutSkeleton = ({ children }: { children: React.ReactNode }) => (
+const ReservationLayoutSkeleton = () => (
   <ContentLayout
     headerContent={<Skeleton className="h-[var(--reservation-footer-height)] w-full" />}
     isHeaderFixed={true}
@@ -29,7 +29,7 @@ const ReservationLayoutSkeleton = ({ children }: { children: React.ReactNode }) 
   </ContentLayout>
 );
 
-function _ReservationLayout({ children }: { children: React.ReactNode }) {
+function ReservationLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -96,6 +96,6 @@ function _ReservationLayout({ children }: { children: React.ReactNode }) {
 }
 
 export default withAuthorization(
-  _ReservationLayout,
+  ReservationLayout,
   { skeletonComponent: ReservationLayoutSkeleton }
 );

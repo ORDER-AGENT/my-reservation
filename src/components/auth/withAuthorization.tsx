@@ -22,7 +22,7 @@ const AuthSkeleton = () => (
 );
 
 interface WithAuthorizationOptions {
-  skeletonComponent?: React.ComponentType<any>; // children を受け取れるように型を拡張
+  skeletonComponent?: React.ComponentType;
   unauthenticatedRedirectPath?: string; // 未認証時のリダイレクト先
   unauthorizedRedirectPath?: string; // 認証済みだが権限がない場合のリダイレクト先
 }
