@@ -403,6 +403,7 @@ const ServiceMenuSettingsPage = () => {
                         width={64}
                         height={64}
                         className="rounded-md object-cover"
+                        unoptimized={true}
                       />
                     ) : (
                       <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center">

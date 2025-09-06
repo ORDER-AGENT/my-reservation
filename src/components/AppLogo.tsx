@@ -13,6 +13,7 @@ export default function AppLogo() {
           height={0}
           sizes="100%"
           className="w-full h-auto"
+          unoptimized={true}
         />
       </div>
     </Link>
