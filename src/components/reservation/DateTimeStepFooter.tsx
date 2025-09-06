@@ -1,8 +1,16 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { selectedDateTimeAtom } from '@/atoms/reservation';
+import { selectedDateTimeAtom, availableSlotsAtom } from '@/atoms/reservation';
 import { useAtomValue } from 'jotai';
+
+// 日付を "YYYY-MM-DD" 形式の文字列にフォーマットするヘルパー関数
+const formatDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 interface DateTimeStepFooterProps {
   onNextClick: () => void;
@@ -11,7 +19,16 @@ interface DateTimeStepFooterProps {
 
 export default function DateTimeStepFooter({ onNextClick, onBackClick }: DateTimeStepFooterProps) {
   const selectedDateTime = useAtomValue(selectedDateTimeAtom);
-  const canProceed = !!selectedDateTime;
+  const availableSlots = useAtomValue(availableSlotsAtom);
+
+  // selectedDateTimeが有効な予約枠に含まれているかチェック
+  const isSelectedDateTimeAvailable = selectedDateTime
+    ? availableSlots?.[formatDate(selectedDateTime)]?.includes(
+        `${selectedDateTime.getHours().toString().padStart(2, '0')}:${selectedDateTime.getMinutes().toString().padStart(2, '0')}`
+      ) ?? false
+    : false;
+
+  const canProceed = !!selectedDateTime && isSelectedDateTimeAvailable;
 
   return (
     <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 w-full">

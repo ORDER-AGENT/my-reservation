@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { useAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import {
   selectedDateTimeAtom,
   selectedStaffAtom,
   selectedMenusAtom,
+  availableSlotsAtom,
 } from '@/atoms/reservation';
 import { useRouter } from 'next/navigation';
 import React from 'react';
@@ -28,6 +29,7 @@ export default function DateTimeStep() {
   const [selectedDateTime, setSelectedDateTime] = useAtom(selectedDateTimeAtom);
   const [selectedStaff] = useAtom(selectedStaffAtom);
   const [selectedMenus] = useAtom(selectedMenusAtom);
+  const setAvailableSlots = useSetAtom(availableSlotsAtom);
   const router = useRouter();
   const [weekOffset, setWeekOffset] = useState(0);
 
@@ -84,6 +86,11 @@ export default function DateTimeStep() {
 
   const availableSlots = availableSlotsResult?.slots;
 
+  // availableSlotsが更新されたらatomに書き込む
+  useEffect(() => {
+    setAvailableSlots(availableSlots);
+  }, [availableSlots, setAvailableSlots]);
+
   console.log("availableSlots", availableSlots);
 
   // その週のユニークな時間スロットをすべて取得し、ソートする
@@ -109,9 +116,10 @@ export default function DateTimeStep() {
       ? `${firstDate.getFullYear()}年 ${firstDate.toLocaleDateString('ja-JP', {
           month: 'long',
         })}`
-      : `${firstDate.getFullYear()}年 ${firstDate.toLocaleDateString('ja-JP', {
-          month: 'long',
-        })} / ${lastDate.getFullYear()}年 ${lastDate.toLocaleDateString(
+      : `${firstDate.getFullYear()}年 ${firstDate.toLocaleDateString(
+          'ja-JP',
+          { month: 'long' },
+        )} / ${lastDate.getFullYear()}年 ${lastDate.toLocaleDateString(
           'ja-JP',
           { month: 'long' },
         )}`;

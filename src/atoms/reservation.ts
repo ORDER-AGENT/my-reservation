@@ -81,3 +81,6 @@ export const reservationTotalsAtom = atom<ReservationTotals>((get) => {
     { price: 0, duration: 0 }
   );
 });
+
+// 予約可能な時間枠を管理するatom
+export const availableSlotsAtom = atom<Record<string, string[]> | undefined>(undefined);
