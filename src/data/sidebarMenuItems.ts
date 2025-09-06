@@ -161,15 +161,77 @@ export const allMenuItems: SidebarMenuItemType[] = [
     path: '/debug',
     displayInFooter: false,
   },
+  {
+    type: 'item',
+    key: 'login',
+    icon: TbLogin2,
+    text: 'ログイン',
+    path: '/auth/signin',
+    displayInFooter: false,
+    isExternal: false,
+    loggedOutOnly: true,
+  },
+  {
+    type: 'item',
+    key: 'login-as-staff',
+    icon: TbLogin2,
+    text: 'スタッフとしてログイン',
+    path: '#',
+    displayInFooter: false,
+    isExternal: false,
+    loggedOutOnly: true,
+    onClick: async () => {
+      try {
+        await signIn("email-password", {
+          email: "demo_staff@yoyaku.com",
+          password: "demostaff",
+          callbackUrl: "/", // ログイン成功後にリダイレクト
+        });
+      } catch (error) {
+        console.error("Login as staff error:", error);
+        alert("ログイン中にエラーが発生しました。");
+      }
+    }
+  },
+  {
+    type: 'item',
+    key: 'logout',
+    icon: TbLogout2,
+    text: 'ログアウト',
+    path: '#',
+    displayInFooter: false,
+    isExternal: false,
+    roles: ['customer', 'staff', 'admin'],
+    onClick: async () => {
+      console.log("[sidebarMenuItems] Logout button clicked");
+      try {
+        await signOut({ callbackUrl: "/" }); 
+        // callbackUrl を指定すると、ログアウト後にそのURLへリダイレクト
+      } catch (error) {
+        console.error("Logout error:", error);
+        alert("ログアウト中にエラーが発生しました。");
+      }
+    }
+  },
 ];
 
 export const getSidebarMenuItems = (userRoles: string[]): SidebarMenuItemType[] => {
-  // ユーザーのロールに基づいてメニュー項目をフィルタリング
+  //console.log('getSidebarMenuItems Debug: userRoles =', userRoles);
   return allMenuItems.filter(item => {
+    // loggedOutOnly が true のアイテムは、ログインしていない場合のみ表示
+    if (item.loggedOutOnly) {
+      // ユーザーがログアウトしているかどうかを厳密に判定
+      // userRoles が ['guest'] の場合にのみログアウト状態とみなす
+      const isLoggedOut = userRoles.length === 0 || userRoles.includes('guest');
+
+      return isLoggedOut;
+    }
+
     // ロールが設定されていない、または空配列の場合は常に表示
     if (!item.roles || item.roles.length === 0) {
       return true;
     }
+    
     // ユーザーのロールとメニュー項目のロールのいずれかが一致すれば表示
     return item.roles.some(role => userRoles.includes(role));
   });

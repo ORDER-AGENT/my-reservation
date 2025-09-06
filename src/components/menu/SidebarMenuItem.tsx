@@ -62,7 +62,12 @@ export default function SidebarMenuItem({
   `;
 
   const handleClick = () => {
-    onClick(); // isExternal の条件分岐を削除し、onClickのみを呼び出す
+    // SidebarMenuItemType の onClick が存在する場合、それを呼び出す
+    if (item.onClick) {
+      item.onClick();
+    }
+    // SidebarMenuItem コンポーネント自身の onClick プロパティも呼び出す (既存の動作)
+    onClick();
   };
 
   const commonProps = {
