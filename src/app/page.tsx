@@ -1,6 +1,9 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import ContentLayout from '@/components/layout/ContentLayout';
+import withAuthorization from '@/components/auth/withAuthorization';
 
 // ヘッダー
 /*
@@ -24,7 +27,7 @@ const createFooter = () => {
   );
 };
 
-export default function CustomerTopPage() {
+function CustomerTopPage() {
   return (
     <ContentLayout
       isHeaderFixed={true}
@@ -45,3 +48,7 @@ export default function CustomerTopPage() {
     </ContentLayout>
   );
 }
+
+export default withAuthorization(CustomerTopPage, {
+  unauthorizedRedirectPath: '/staff/reservations',
+});

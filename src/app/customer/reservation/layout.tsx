@@ -9,10 +9,27 @@ import DateTimeStepFooter from '@/components/reservation/DateTimeStepFooter';
 import CustomerInfoStepFooter from '@/components/reservation/CustomerInfoStepFooter';
 import ConfirmFooter from '@/components/reservation/ConfirmFooter';
 import { useEffect } from 'react';
+import withAuthorization from '@/components/auth/withAuthorization';
+import { Skeleton } from '@/components/ui/skeleton';
 import { stepOrder } from '@/types/reservation';
 import ReservationNavigationContext from '@/contexts/ReservationNavigationContext';
 
-export default function ReservationLayout({ children }: { children: React.ReactNode }) {
+
+const ReservationLayoutSkeleton = ({ children }: { children: React.ReactNode }) => (
+  <ContentLayout
+    headerContent={<Skeleton className="h-[var(--reservation-footer-height)] w-full" />}
+    isHeaderFixed={true}
+    footerContent={<Skeleton className="h-[var(--reservation-footer-height)] w-full" />}
+    isFooterFixed={true}
+  >
+    <div className="flex flex-col items-center justify-center h-full">
+      <Skeleton className="h-24 w-full max-w-md mb-4" />
+      <Skeleton className="h-96 w-full max-w-md" />
+    </div>
+  </ContentLayout>
+);
+
+function _ReservationLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -77,3 +94,8 @@ export default function ReservationLayout({ children }: { children: React.ReactN
     </ContentLayout>
   );
 }
+
+export default withAuthorization(
+  _ReservationLayout,
+  { skeletonComponent: ReservationLayoutSkeleton }
+);
