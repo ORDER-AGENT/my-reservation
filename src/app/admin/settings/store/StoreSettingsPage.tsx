@@ -25,6 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import ContentLayout from '@/components/layout/ContentLayout';
 import { useAppSession } from '@/hooks/useAppSession';
 import { Id } from '@/convex/_generated/dataModel';
+import useAuthorization from '@/hooks/useAuthorization';
 
 // 曜日の定義
 const daysOfWeek = [
@@ -94,7 +95,8 @@ const formSchema = z.object({
 
 // ページコンポーネント本体
 const StoreSettingsPage = () => {
-  const { session, status } = useAppSession();
+  const { session } = useAppSession();
+  const { isReadOnly } = useAuthorization(); // isReadOnlyフラグを取得
   const userId = session?.user?.id;
 
   // Convexから店舗情報を取得 (認証されている場合のみ)
@@ -134,6 +136,10 @@ const StoreSettingsPage = () => {
 
   // フォーム送信時の処理
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (isReadOnly) {
+      toast.warning('読み取り専用のため、操作は許可されていません。');
+      return;
+    }
     if (!userId) {
       toast.error('ユーザーが認証されていません');
       return;
@@ -161,120 +167,129 @@ const StoreSettingsPage = () => {
       <Card className="w-full max-w-2xl mx-auto mb-8">
         <CardHeader>
           <CardTitle>店舗情報設定</CardTitle>
-          <CardDescription>店舗の基本情報と営業時間を設定します。</CardDescription>
+          <CardDescription>
+            店舗の基本情報と営業時間を設定します。
+            {isReadOnly && (
+              <p className="text-yellow-600 mt-2">
+                現在、読み取り専用モードです。情報の編集はできません。
+              </p>
+            )}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>店舗名</FormLabel>
-                    <FormControl>
-                      <Input placeholder="例: Gemini Salon" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>住所</FormLabel>
-                    <FormControl>
-                      <Input placeholder="例: 東京都渋谷区..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>電話番号</FormLabel>
-                    <FormControl>
-                      <Input placeholder="例: 03-1234-5678" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <fieldset disabled={isReadOnly}>
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>店舗名</FormLabel>
+                      <FormControl>
+                        <Input placeholder="例: Gemini Salon" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>住所</FormLabel>
+                      <FormControl>
+                        <Input placeholder="例: 東京都渋谷区..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>電話番号</FormLabel>
+                      <FormControl>
+                        <Input placeholder="例: 03-1234-5678" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="enabledDays"
-                render={() => (
-                  <FormItem>
-                    <div className="mb-4">
-                      <FormLabel className="text-base">営業時間</FormLabel>
-                      <FormDescription>
-                        営業する曜日を選択し、営業時間を入力してください。
-                      </FormDescription>
-                    </div>
-                    {daysOfWeek.map((day) => (
-                      <FormField
-                        key={day.id}
-                        control={form.control}
-                        name="enabledDays"
-                        render={({ field }) => {
-                          const dayIndex = form.getValues('openingHours')?.findIndex(d => d.dayOfWeek === day.id) ?? -1;
-                          return (
-                            <div className="flex items-center space-x-4 p-2 rounded-md hover:bg-muted">
-                              <Checkbox
-                                checked={field.value?.includes(day.id)}
-                                onCheckedChange={(checked) => {
-                                  return checked
-                                    ? field.onChange([...(field.value || []), day.id])
-                                    : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== day.id
-                                      )
-                                    );
-                                }}
-                              />
-                              <FormLabel className="flex-1 font-normal">{day.label}</FormLabel>
-                              <div className="flex items-center space-x-2">
-                                <FormField
-                                  control={form.control}
-                                  name={`openingHours.${dayIndex}.startTime`}
-                                  render={({ field: timeField }) => (
-                                    <Input
-                                      type="time"
-                                      {...timeField}
-                                      disabled={!field.value?.includes(day.id)}
-                                    />
-                                  )}
+                <FormField
+                  control={form.control}
+                  name="enabledDays"
+                  render={() => (
+                    <FormItem>
+                      <div className="mb-4">
+                        <FormLabel className="text-base">営業時間</FormLabel>
+                        <FormDescription>
+                          営業する曜日を選択し、営業時間を入力してください。
+                        </FormDescription>
+                      </div>
+                      {daysOfWeek.map((day) => (
+                        <FormField
+                          key={day.id}
+                          control={form.control}
+                          name="enabledDays"
+                          render={({ field }) => {
+                            const dayIndex = form.getValues('openingHours')?.findIndex(d => d.dayOfWeek === day.id) ?? -1;
+                            return (
+                              <div className="flex items-center space-x-4 p-2 rounded-md hover:bg-muted">
+                                <Checkbox
+                                  checked={field.value?.includes(day.id)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...(field.value || []), day.id])
+                                      : field.onChange(
+                                        field.value?.filter(
+                                          (value) => value !== day.id
+                                        )
+                                      );
+                                  }}
                                 />
-                                <span>-</span>
-                                <FormField
-                                  control={form.control}
-                                  name={`openingHours.${dayIndex}.endTime`}
-                                  render={({ field: timeField }) => (
-                                    <Input
-                                      type="time"
-                                      {...timeField}
-                                      disabled={!field.value?.includes(day.id)}
-                                    />
-                                  )}
-                                />
+                                <FormLabel className="flex-1 font-normal">{day.label}</FormLabel>
+                                <div className="flex items-center space-x-2">
+                                  <FormField
+                                    control={form.control}
+                                    name={`openingHours.${dayIndex}.startTime`}
+                                    render={({ field: timeField }) => (
+                                      <Input
+                                        type="time"
+                                        {...timeField}
+                                        disabled={!field.value?.includes(day.id)}
+                                      />
+                                    )}
+                                  />
+                                  <span>-</span>
+                                  <FormField
+                                    control={form.control}
+                                    name={`openingHours.${dayIndex}.endTime`}
+                                    render={({ field: timeField }) => (
+                                      <Input
+                                        type="time"
+                                        {...timeField}
+                                        disabled={!field.value?.includes(day.id)}
+                                      />
+                                    )}
+                                  />
+                                </div>
                               </div>
-                            </div>
-                          );
-                        }}
-                      />
-                    ))}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                            );
+                          }}
+                        />
+                      ))}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </fieldset>
 
-              <Button type="submit">保存する</Button>
+              <Button type="submit" disabled={isReadOnly}>保存する</Button>
             </form>
           </Form>
         </CardContent>

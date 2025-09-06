@@ -22,7 +22,9 @@ const AuthSkeleton = () => (
 );
 
 interface WithAuthorizationOptions {
-  skeletonComponent?: React.ComponentType;
+  skeletonComponent?: React.ComponentType<any>; // children を受け取れるように型を拡張
+  unauthenticatedRedirectPath?: string; // 未認証時のリダイレクト先
+  unauthorizedRedirectPath?: string; // 認証済みだが権限がない場合のリダイレクト先
 }
 
 const withAuthorization = <P extends object>(
@@ -37,13 +39,13 @@ const withAuthorization = <P extends object>(
       // 初期化チェックが不要な場合、または初期化済みの場合は、通常の権限チェックとリダイレクトを行う
       if (!isLoading && !isAuthorized && isSystemInitialized) {
         if (isUnauthenticated) {
-          router.push('/auth/signin');
+          router.push(options?.unauthenticatedRedirectPath || '/auth/signin');
         } else {
           // 認証済みだが権限がない場合
-          router.push('/');
+          router.push(options?.unauthorizedRedirectPath || '/');
         }
       }
-    }, [isLoading, isAuthorized, isUnauthenticated, isSystemInitialized, router]);
+    }, [isLoading, isAuthorized, isUnauthenticated, isSystemInitialized, router, options]);
 
     if (isLoading) {
       const SkeletonComponent = options?.skeletonComponent;

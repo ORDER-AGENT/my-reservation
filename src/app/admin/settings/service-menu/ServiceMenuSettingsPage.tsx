@@ -27,6 +27,7 @@ import ContentLayout from '@/components/layout/ContentLayout';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import withAuthorization from '@/components/auth/withAuthorization';
 import { Skeleton } from '@/components/ui/skeleton';
+import useAuthorization from '@/hooks/useAuthorization';
 import Image from 'next/image';
 
 // サービスメニューフォームのスキーマ定義
@@ -93,6 +94,7 @@ const ServiceMenuSettingsSkeleton = () => (
 // ページコンポーネント本体
 const ServiceMenuSettingsPage = () => {
   const { session } = useAppSession();
+  const { isReadOnly } = useAuthorization();
   const storeId = session?.user.storeId as Id<'stores'> | undefined;
   const createServiceMenu = useMutation(api.services.create);
   const updateServiceMenu = useMutation(api.services.update);
@@ -112,6 +114,7 @@ const ServiceMenuSettingsPage = () => {
   }, [serviceMenus]);
 
   const handleAddCategory = () => {
+    if (isReadOnly) return;
     const trimmedCategoryName = newCategoryName.trim();
     if (trimmedCategoryName && !uniqueCategories.includes(trimmedCategoryName)) {
       setUniqueCategories(prev => [...prev, trimmedCategoryName]);
@@ -153,6 +156,7 @@ const ServiceMenuSettingsPage = () => {
   }, [editingServiceMenuId, serviceMenus, form]);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (isReadOnly) return;
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -179,6 +183,10 @@ const ServiceMenuSettingsPage = () => {
   };
 
   async function onSubmit(values: ServiceMenuFormValues) {
+    if (isReadOnly) {
+      toast.warning('読み取り専用のため、操作は許可されていません。');
+      return;
+    }
     if (!storeId) {
       toast.error('店舗情報が取得できませんでした。');
       return;
@@ -210,6 +218,7 @@ const ServiceMenuSettingsPage = () => {
   }
 
   const handleEdit = (menuId: Id<'services'>) => {
+    if (isReadOnly) return;
     setEditingServiceMenuId(menuId);
   };
 
@@ -223,159 +232,168 @@ const ServiceMenuSettingsPage = () => {
       <Card className="w-full max-w-2xl mx-auto mb-8">
         <CardHeader>
           <CardTitle>{editingServiceMenuId ? 'サービスメニュー編集' : '新しいサービスメニューを登録'}</CardTitle>
-          <CardDescription>新しいサービスメニューを追加したり、既存のメニューを編集できます。</CardDescription>
+          <CardDescription>
+            新しいサービスメニューを追加したり、既存のメニューを編集できます。
+            {isReadOnly && (
+              <p className="text-yellow-600 mt-2">
+                現在、読み取り専用モードです。情報の編集はできません。
+              </p>
+            )}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>サービスメニュー名</FormLabel>
-                    <FormControl>
-                      <Input placeholder="例: カット & カラー" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>説明 (任意)</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="例: 最新のトレンドを取り入れたカットと、お客様に似合うカラーリングを提案します。" {...field} />
-                    </FormControl>
-                    <FormDescription>サービスの詳細を記述します。</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>価格 (円)</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="duration"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>所要時間 (分)</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>カテゴリ</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+              <fieldset disabled={isReadOnly}>
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>サービスメニュー名</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="カテゴリを選択" />
-                        </SelectTrigger>
+                        <Input placeholder="例: カット & カラー" {...field} />
                       </FormControl>
-                      <SelectContent>
-                        {uniqueCategories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>既存のカテゴリから選択するか、新しいカテゴリを入力してください。</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex items-center space-x-2">
-                <Input
-                  placeholder="新しいカテゴリ名"
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  className="flex-grow"
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleAddCategory}
-                  disabled={!newCategoryName.trim()}
-                >
-                  カテゴリを追加
-                </Button>
-              </div>
-              <FormField
-                control={form.control}
-                name="imageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>画像URL (任意)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="https://example.com/image.png" 
-                        {...field} 
-                        onChange={(e) => {
-                          field.onChange(e);
-                          form.setValue('storageId', '');
-                        }}
-                      />
-                    </FormControl>
-                    <FormDescription>画像のURLを直接入力するか、下のボタンからアップロードしてください。</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormItem>
-                <FormLabel>画像をアップロード</FormLabel>
-                <FormControl>
-                  <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={isUploading} />
-                </FormControl>
-                {isUploading && <p className="text-sm text-gray-500">アップロード中...</p>}
-              </FormItem>
-              <FormField
-                control={form.control}
-                name="isActive"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>公開する</FormLabel>
-                      <FormDescription>
-                        このサービスメニューを顧客に表示するかどうかを設定します。
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>説明 (任意)</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="例: 最新のトレンドを取り入れたカットと、お客様に似合うカラーリングを提案します。" {...field} />
+                      </FormControl>
+                      <FormDescription>サービスの詳細を記述します。</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>価格 (円)</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="duration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>所要時間 (分)</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>カテゴリ</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="カテゴリを選択" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {uniqueCategories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>既存のカテゴリから選択するか、新しいカテゴリを入力してください。</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex items-center space-x-2">
+                  <Input
+                    placeholder="新しいカテゴリ名"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    className="flex-grow"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddCategory}
+                    disabled={!newCategoryName.trim() || isReadOnly}
+                  >
+                    カテゴリを追加
+                  </Button>
+                </div>
+                <FormField
+                  control={form.control}
+                  name="imageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>画像URL (任意)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="https://example.com/image.png" 
+                          {...field} 
+                          onChange={(e) => {
+                            field.onChange(e);
+                            form.setValue('storageId', '');
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>画像のURLを直接入力するか、下のボタンからアップロードしてください。</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormItem>
+                  <FormLabel>画像をアップロード</FormLabel>
+                  <FormControl>
+                    <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={isUploading || isReadOnly} />
+                  </FormControl>
+                  {isUploading && <p className="text-sm text-gray-500">アップロード中...</p>}
+                </FormItem>
+                <FormField
+                  control={form.control}
+                  name="isActive"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>公開する</FormLabel>
+                        <FormDescription>
+                          このサービスメニューを顧客に表示するかどうかを設定します。
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </fieldset>
               <div className="flex flex-col gap-2">
-                <Button type="submit" className="w-full" disabled={isUploading}>
+                <Button type="submit" className="w-full" disabled={isUploading || isReadOnly}>
                   {editingServiceMenuId ? 'サービスメニューを更新' : 'サービスメニューを登録'}
                 </Button>
                 {editingServiceMenuId && (
-                  <Button type="button" variant="outline" onClick={handleCancelEdit} className="w-full">
+                  <Button type="button" variant="outline" onClick={handleCancelEdit} className="w-full" disabled={isReadOnly}>
                     キャンセル
                   </Button>
                 )}
@@ -418,7 +436,7 @@ const ServiceMenuSettingsPage = () => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(menu._id)}>編集</Button>
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(menu._id)} disabled={isReadOnly}>編集</Button>
                     {/* 削除機能は後で追加 */}
                   </div>
                 </li>

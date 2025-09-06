@@ -1,25 +1,49 @@
 import { UserRole } from '@/types/user';
 
 /**
- * 各ページへのアクセスに必要なロールを定義
- * keyはパスの正規表現、valueは許可されるロールの配列
+ * 各ページへのアクセス権限定義
  */
-export const pageRoles: { [pathRegex: string]: UserRole[] } = {
-  '^/admin.*': ['admin'],
-  '^/staff.*': ['admin', 'admin'],
-  '^/customer.*': ['customer', 'admin'],
+export type PageAccessDef = {
+  /** 読み書きを許可するロール */
+  readWrite: UserRole[];
+  /** 読み取り専用を許可するロール */
+  readOnly: UserRole[];
+};
+
+/**
+ * 各ページへのアクセス権限ルール
+ * keyはパスの正規表現
+ */
+export const pageAccessDefs: { [pathRegex: string]: PageAccessDef } = {
+  '^/admin.*': {
+    readWrite: ['admin'],
+    readOnly: ['staff'], // staffは読み取り専用でadminページにアクセス可能
+  },
+  '^/staff.*': {
+    readWrite: ['admin', 'staff'],
+    readOnly: [],
+  },
+  '^/customer.*': {
+    readWrite: ['customer', 'guest'],
+    readOnly: [],
+    //readOnly: ['staff', 'admin'],
+  },
+  '^/$': { // ルートページに対するアクセス権限
+    readWrite: ['customer', 'guest'],
+    readOnly: [],
+  },
   // 他のページのルール...
 };
 
 /**
- * 指定されたパスに必要なロールを取得する
+ * 指定されたパスのアクセス権限定義を取得する
  * @param path - 現在のページのパス
- * @returns 必要なロールの配列。ルールがなければundefined
+ * @returns 権限定義。ルールがなければundefined
  */
-export const getRequiredRoles = (path: string): UserRole[] | undefined => {
-  for (const pathRegex in pageRoles) {
+export const getPageAccessDef = (path: string): PageAccessDef | undefined => {
+  for (const pathRegex in pageAccessDefs) {
     if (new RegExp(pathRegex).test(path)) {
-      return pageRoles[pathRegex];
+      return pageAccessDefs[pathRegex];
     }
   }
   return undefined;

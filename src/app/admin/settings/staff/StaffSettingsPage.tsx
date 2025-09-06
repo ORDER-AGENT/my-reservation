@@ -33,6 +33,7 @@ import { useEffect, useRef, useState } from 'react';
 import ContentLayout from '@/components/layout/ContentLayout';
 import withAuthorization from '@/components/auth/withAuthorization';
 import { Skeleton } from '@/components/ui/skeleton';
+import useAuthorization from '@/hooks/useAuthorization';
 import Image from 'next/image';
 
 // スタッフフォームのスキーマ定義
@@ -127,6 +128,7 @@ const StaffSettingsSkeleton = () => (
 // ページコンポーネント本体
 const StaffSettingsPage = () => {
   const { session } = useAppSession();
+  const { isReadOnly } = useAuthorization();
   const storeId = session?.user.storeId as Id<'stores'> | undefined;
 
   const createStaff = useAction(api.staffs.createStaffWithUser);
@@ -176,6 +178,7 @@ const StaffSettingsPage = () => {
   }, [editingStaffId, staffs, form]);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (isReadOnly) return;
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -202,6 +205,10 @@ const StaffSettingsPage = () => {
   };
 
   async function onSubmit(values: StaffFormValues) {
+    if (isReadOnly) {
+      toast.warning('読み取り専用のため、操作は許可されていません。');
+      return;
+    }
     if (!storeId) {
       toast.error('店舗情報が取得できませんでした。');
       return;
@@ -280,6 +287,10 @@ const StaffSettingsPage = () => {
   const handleDelete = useMutation(api.staffs.deleteStaffWithUser);
 
   const confirmDeleteStaff = async () => {
+    if (isReadOnly) {
+      toast.warning('読み取り専用のため、操作は許可されていません。');
+      return;
+    }
     if (staffToDelete) {
       try {
         await handleDelete({ staffId: staffToDelete });
@@ -294,6 +305,7 @@ const StaffSettingsPage = () => {
   };
 
   const handleEdit = (staffId: Id<'staffs'>) => {
+    if (isReadOnly) return;
     setEditingStaffId(staffId);
     if (formCardRef.current) {
       formCardRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -314,171 +326,180 @@ const StaffSettingsPage = () => {
       <Card ref={formCardRef} className="w-full max-w-2xl mx-auto mb-8">
         <CardHeader>
           <CardTitle>{editingStaffId ? 'スタッフ情報編集' : '新しいスタッフを登録'}</CardTitle>
-          <CardDescription>新しいスタッフを追加したり、既存のスタッフ情報を編集できます。</CardDescription>
+          <CardDescription>
+            新しいスタッフを追加したり、既存のスタッフ情報を編集できます。
+            {isReadOnly && (
+              <p className="text-yellow-600 mt-2">
+                現在、読み取り専用モードです。情報の編集はできません。
+              </p>
+            )}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>スタッフ名</FormLabel>
-                    <FormControl>
-                      <Input placeholder="例: 山田 太郎" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              <fieldset disabled={isReadOnly}>
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>スタッフ名</FormLabel>
+                      <FormControl>
+                        <Input placeholder="例: 山田 太郎" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>メールアドレス</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="例: staff@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {!editingStaffId ? ( // 新規登録時のみパスワードフィールドを表示
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>パスワード</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="********" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>パスワード（確認）</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="********" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                ) : ( // 編集時のみパスワード変更フィールドを表示
+                  <>
+                    <h3 className="text-lg font-semibold mt-6 mb-2">パスワード変更</h3>
+                    <FormField
+                      control={form.control}
+                      name="currentPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>現在のパスワード</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="現在のパスワード" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="newPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>新しいパスワード</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="新しいパスワード" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="confirmNewPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>新しいパスワード（確認）</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="新しいパスワード（確認）" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
                 )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>メールアドレス</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="例: staff@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {!editingStaffId ? ( // 新規登録時のみパスワードフィールドを表示
-                <>
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>パスワード</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="********" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>パスワード（確認）</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="********" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </>
-              ) : ( // 編集時のみパスワード変更フィールドを表示
-                <>
-                  <h3 className="text-lg font-semibold mt-6 mb-2">パスワード変更</h3>
-                  <FormField
-                    control={form.control}
-                    name="currentPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>現在のパスワード</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="現在のパスワード" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="newPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>新しいパスワード</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="新しいパスワード" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="confirmNewPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>新しいパスワード（確認）</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="新しいパスワード（確認）" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </>
-              )}
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>役職 (任意)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="例: スタイリスト" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="bio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>自己紹介 (任意)</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="例: お客様の魅力を最大限に引き出すスタイルを提案します。" {...field} />
-                    </FormControl>
-                    <FormDescription>スタッフの自己紹介を記述します。</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="imageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>プロフィール画像URL (任意)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="https://example.com/staff_image.jpg" 
-                        {...field} 
-                        onChange={(e) => {
-                          field.onChange(e);
-                          form.setValue('storageId', '');
-                        }}
-                      />
-                    </FormControl>
-                    <FormDescription>画像のURLを直接入力するか、下のボタンからアップロードしてください。</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormItem>
-                <FormLabel>画像をアップロード</FormLabel>
-                <FormControl>
-                  <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={isUploading} />
-                </FormControl>
-                {isUploading && <p className="text-sm text-gray-500">アップロード中...</p>}
-              </FormItem>
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>役職 (任意)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="例: スタイリスト" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="bio"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>自己紹介 (任意)</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="例: お客様の魅力を最大限に引き出すスタイルを提案します。" {...field} />
+                      </FormControl>
+                      <FormDescription>スタッフの自己紹介を記述します。</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="imageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>プロフィール画像URL (任意)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="https://example.com/staff_image.jpg" 
+                          {...field} 
+                          onChange={(e) => {
+                            field.onChange(e);
+                            form.setValue('storageId', '');
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>画像のURLを直接入力するか、下のボタンからアップロードしてください。</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormItem>
+                  <FormLabel>画像をアップロード</FormLabel>
+                  <FormControl>
+                    <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={isUploading || isReadOnly} />
+                  </FormControl>
+                  {isUploading && <p className="text-sm text-gray-500">アップロード中...</p>}
+                </FormItem>
+              </fieldset>
               <div className="flex flex-col gap-2">
-                <Button type="submit" className="w-full" disabled={isUploading}>
+                <Button type="submit" className="w-full" disabled={isUploading || isReadOnly}>
                   {editingStaffId ? 'スタッフ情報を更新' : 'スタッフを登録'}
                 </Button>
                 {editingStaffId && (
-                  <Button type="button" variant="outline" onClick={handleCancelEdit} className="w-full">
+                  <Button type="button" variant="outline" onClick={handleCancelEdit} className="w-full" disabled={isReadOnly}>
                     キャンセル
                   </Button>
                 )}
@@ -487,10 +508,12 @@ const StaffSettingsPage = () => {
                     type="button"
                     variant="destructive"
                     onClick={() => {
+                      if (isReadOnly) return;
                       setStaffToDelete(editingStaffId);
                       setIsDeleteDialogOpen(true);
                     }}
                     className="w-full"
+                    disabled={isReadOnly}
                   >
                     スタッフを削除
                   </Button>
@@ -533,7 +556,7 @@ const StaffSettingsPage = () => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(staff!._id)}>編集</Button>
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(staff!._id)} disabled={isReadOnly}>編集</Button>
                   </div>
                 </li>
               ))}
@@ -553,12 +576,8 @@ const StaffSettingsPage = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              キャンセル
-            </Button>
-            <Button variant="destructive" onClick={confirmDeleteStaff}>
-              削除
-            </Button>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>キャンセル</Button>
+            <Button variant="destructive" onClick={confirmDeleteStaff} disabled={isReadOnly}>削除</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

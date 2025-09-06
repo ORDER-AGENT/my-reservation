@@ -20,8 +20,8 @@ export const getStore = query({
 
     console.log(user);
 
-    // ユーザーが管理者でない場合はエラー
-    if (user.role !== 'admin') {
+    // ユーザーが管理者またはスタッフでない場合はエラー
+    if (user.role !== 'admin' && user.role !== 'staff') {
       throw new ConvexError('Not authorized');
     }
 

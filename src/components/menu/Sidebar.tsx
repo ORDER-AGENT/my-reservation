@@ -11,6 +11,7 @@ import { usePathname } from 'next/navigation';
 import { useScreenSize } from '@/hooks/useMediaQuery';
 import { getSidebarMenuItems } from '@/data/sidebarMenuItems';
 import { SidebarMenuItemType } from '@/types/sidebar';
+import { UserRole } from '@/types/user';
 
 interface SidebarProps {
   onMenuToggleClick: () => void; // AppHeader に渡すためのプロップ
@@ -20,7 +21,10 @@ interface SidebarProps {
 export default function Sidebar({ onMenuToggleClick, isMenuOpen }: SidebarProps) {
   // ステート変数の定義
   const router = useRouter(); // Next.jsのルーターフック
-  const { status } = useSession(); // NextAuth.jsのセッション情報を取得
+  const { data, status } = useSession(); // NextAuth.jsのセッション情報を取得
+  
+  //console.log('Sidebar Debug: status =', status);
+
   const pathname = usePathname(); // 現在のパスを取得
   const [touchStartX, setTouchStartX] = useState(0); // スワイプ開始時のX座標を保持するステート
   const { isLargeScreen } = useScreenSize();
@@ -29,8 +33,16 @@ export default function Sidebar({ onMenuToggleClick, isMenuOpen }: SidebarProps)
   // ログイン状態を判定
   const isLoggedIn = status === 'authenticated';
 
-  // ログイン状態に基づいてロールを決定（暫定対応）
-  const userRoles = isLoggedIn ? ['admin', 'guest'] : ['guest'];
+  // ユーザーのロールを動的に取得。ロード中は空配列を渡す
+  const currentUserRoles: UserRole[] = data?.user?.role ? [data.user.role] : ['guest'];
+
+  // ロード中ではない場合のみメニュー項目を生成
+  const menuItemsToRender: SidebarMenuItemType[] | null =
+    status === 'loading'
+      ? null // ロード中はnullを渡し、SidebarContentでスケルトンを表示させる
+      : getSidebarMenuItems(currentUserRoles as string[]);
+
+  //console.log('Sidebar Debug: menuItemsToRender =', menuItemsToRender);
 
   const handleSidebarToggle = (e: React.MouseEvent<HTMLDivElement>) => {
     // クリックがコンテナ自身（空白領域）から発生した場合にのみトグルを実行
@@ -110,7 +122,7 @@ export default function Sidebar({ onMenuToggleClick, isMenuOpen }: SidebarProps)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   // 静的なメニュー項目データを定義
-  const staticMenuItems: SidebarMenuItemType[] = getSidebarMenuItems(userRoles);
+  const staticMenuItems: SidebarMenuItemType[] = getSidebarMenuItems(currentUserRoles);
   
   // TODO: 動的なメニュー項目を取得するロジックを実装
   // const [dynamicMenuItems, setDynamicMenuItems] = useState<SidebarMenuItemType[] | null>(null);
@@ -193,7 +205,7 @@ export default function Sidebar({ onMenuToggleClick, isMenuOpen }: SidebarProps)
           className="absolute top-0 bottom-[var(--header-height)] left-0 w-full overflow-y-auto overflow-x-hidden flex flex-col items-start"
         >
           <SidebarContent
-            menuItems={staticMenuItems}
+            menuItems={menuItemsToRender}
             hoveredItem={hoveredItem}
             onMouseEnter={setHoveredItem}
             onMouseLeave={setHoveredItem}
@@ -247,7 +259,7 @@ export default function Sidebar({ onMenuToggleClick, isMenuOpen }: SidebarProps)
               className="flex-grow overflow-y-auto w-full flex flex-col"
             >
               <SidebarContent
-                menuItems={staticMenuItems}
+                menuItems={menuItemsToRender}
                 hoveredItem={hoveredItem}
                 onMouseEnter={setHoveredItem}
                 onMouseLeave={setHoveredItem}

@@ -1,5 +1,6 @@
 import { FaGithub } from 'react-icons/fa';
 import { HiUsers } from 'react-icons/hi2';
+import { TbLogin2, TbLogout2 } from 'react-icons/tb';
 import { IoDocumentsSharp } from 'react-icons/io5';
 import { TiHome } from 'react-icons/ti';
 import {
@@ -11,6 +12,7 @@ import {
 } from 'react-icons/ri';
 //import { BsChatDotsFill } from 'react-icons/bs';
 import { SidebarMenuItemType } from '@/types/sidebar';
+import { signIn, signOut } from "next-auth/react";
 
 export const allMenuItems: SidebarMenuItemType[] = [
   // 顧客向けメニュー
@@ -21,7 +23,7 @@ export const allMenuItems: SidebarMenuItemType[] = [
     text: 'ホーム',
     path: '/',
     displayInFooter: true,
-    // roles: ['customer'],
+    roles: ['customer', 'guest'],
   },
   {
     type: 'item',
@@ -30,7 +32,7 @@ export const allMenuItems: SidebarMenuItemType[] = [
     text: '予約',
     path: '/customer/reservation',
     displayInFooter: true,
-    // roles: ['customer'],
+    roles: ['customer', 'guest'],
   },
   {
     type: 'item',
@@ -40,7 +42,7 @@ export const allMenuItems: SidebarMenuItemType[] = [
     //path: '/customer/mypage',
     path: '/under-construction',
     displayInFooter: true,
-    // roles: ['customer'],
+    roles: ['customer', 'guest'],
   },
   /*
   {
@@ -55,6 +57,7 @@ export const allMenuItems: SidebarMenuItemType[] = [
   {
     type: 'divider',
     key: 'scope-divider',
+    roles: ['customer', 'guest'],
   },
   // 店舗スタッフ・管理者向けメニュー
   {
@@ -65,7 +68,7 @@ export const allMenuItems: SidebarMenuItemType[] = [
     //path: '/admin',
     path: '/under-construction',
     displayInFooter: true,
-    // roles: ['admin', 'staff'],
+    roles: ['admin', 'staff'],
   },
   {
     type: 'item',
@@ -74,7 +77,7 @@ export const allMenuItems: SidebarMenuItemType[] = [
     text: '予約管理',
     path: '/staff/reservations',
     displayInFooter: true,
-    // roles: ['admin', 'staff'],
+    roles: ['admin', 'staff'],
   },
   {
     type: 'item',
@@ -83,7 +86,7 @@ export const allMenuItems: SidebarMenuItemType[] = [
     text: 'スケジュール管理',
     path: '/staff/schedule',
     displayInFooter: true,
-    // roles: ['admin', 'staff'],
+    roles: ['admin', 'staff'],
   },
   {
     type: 'item',
@@ -93,7 +96,7 @@ export const allMenuItems: SidebarMenuItemType[] = [
     //path: '/admin/customers',
     path: '/under-construction',
     displayInFooter: true,
-    // roles: ['admin', 'staff'],
+    roles: ['admin', 'staff'],
   },
   {
     type: 'item',
@@ -102,7 +105,7 @@ export const allMenuItems: SidebarMenuItemType[] = [
     text: '設定',
     //path: '/admin/settings',
     displayInFooter: false,
-    // roles: ['admin'],
+    roles: ['admin', 'staff'],
     children: [
       {
         type: 'item',
@@ -110,7 +113,6 @@ export const allMenuItems: SidebarMenuItemType[] = [
         icon: RiStore2Line,
         text: '店舗情報登録',
         path: '/admin/settings/store',
-        // roles: ['admin'],
       },
       {
         type: 'item',
@@ -118,7 +120,6 @@ export const allMenuItems: SidebarMenuItemType[] = [
         icon: RiFileList2Line,
         text: 'サービスメニュー登録',
         path: '/admin/settings/service-menu',
-        // roles: ['admin'],
       },
       {
         type: 'item',
@@ -126,13 +127,13 @@ export const allMenuItems: SidebarMenuItemType[] = [
         icon: HiUsers,
         text: 'スタッフ登録',
         path: '/admin/settings/staff',
-        // roles: ['admin'],
       },
     ],
   },
   {
     type: 'divider',
     key: 'external-divider',
+    roles: ['admin', 'staff'],
   },
   {
     type: 'item',
