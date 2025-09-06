@@ -1,5 +1,6 @@
 'use client';
 
+// 必要なモジュールとフックのインポート
 import {
   hasCheckedForRestoreAtom,
   reservationTotalsAtom,
@@ -16,43 +17,72 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useQuery } from 'convex/react';
-import { api } from '../../../../convex/_generated/api';
+import { api } from '@/convex/_generated/api';
 
+// デバッグページコンポーネントの定義
 export default function DebugPage() {
+  // LocalStorageから最終予約情報を取得・削除するためのフック
   const { getItem, removeItem } = useLocalStorage<LastReservation>('lastReservation');
+  // LocalStorageから取得した予約情報を保持する状態
   const [reservation, setReservation] = useState<LastReservation | null>(null);
 
-  // Atom values
+  // Jotai Atomの値を取得
   const selectedMenus = useAtomValue(selectedMenusAtom);
   const selectedStaff = useAtomValue(selectedStaffAtom);
   const selectedDateTime = useAtomValue(selectedDateTimeAtom);
   const reservationTotals = useAtomValue(reservationTotalsAtom);
   const hasCheckedForRestore = useAtomValue(hasCheckedForRestoreAtom);
   const customerInfo = useAtomValue(customerInfoAtom);
+  // Jotai Atomをリセットするための関数
   const resetAtoms = useSetAtom(resetReservationAtom);
 
+  // Next-Authセッションデータの取得
   const { data: session } = useSession();
+  // Convexからユーザー情報を取得
   const user = useQuery(api.users.getUserByEmail, session?.user.email ? { email: session.user.email } : 'skip');
 
+  // コンポーネントのマウント時にLocalStorageから予約情報を読み込む
   useEffect(() => {
     setReservation(getItem());
   }, [getItem]);
 
+  // LocalStorageの'lastReservation'をクリアするハンドラー
   const handleClearLocalStorage = () => {
     removeItem();
     setReservation(null); // 画面表示も更新
   };
 
+  // LocalStorageのデータを再読み込みするハンドラー
   const handleRefresh = () => {
     setReservation(getItem());
   };
 
+  // 全てのJotai Atomをリセットするハンドラー
   const handleResetAtoms = () => {
     resetAtoms();
   };
 
+  // UIのレンダリング
   return (
     <div className="container mx-auto p-4 space-y-8">
+      {/* 現在のユーザー情報表示セクション */}
+      <div>
+        <h1 className="text-2xl font-bold mb-4">Debug: Current User</h1>
+        <div className="p-4 border rounded-md bg-gray-50">
+          <h2 className="text-lg font-semibold">Session Data</h2>
+          <pre className="text-sm whitespace-pre-wrap break-all">
+            {JSON.stringify(session, null, 2)}
+          </pre>
+        </div>
+        <div className="p-4 border rounded-md bg-gray-50 mt-4">
+          <h2 className="text-lg font-semibold">User Document (from Convex)</h2>
+          <pre className="text-sm whitespace-pre-wrap break-all">
+            {JSON.stringify(user, null, 2)}
+          </pre>
+        </div>
+      </div>
+
+      {/* Jotai Atomの状態表示セクション */}
       <div>
         <h1 className="text-2xl font-bold mb-4">Debug: Atom State</h1>
         <div className="space-x-2 mb-4">
@@ -100,22 +130,7 @@ export default function DebugPage() {
         </div>
       </div>
 
-      <div>
-        <h1 className="text-2xl font-bold mb-4">Debug: Current User</h1>
-        <div className="p-4 border rounded-md bg-gray-50">
-          <h2 className="text-lg font-semibold">Session Data</h2>
-          <pre className="text-sm whitespace-pre-wrap break-all">
-            {JSON.stringify(session, null, 2)}
-          </pre>
-        </div>
-        <div className="p-4 border rounded-md bg-gray-50 mt-4">
-          <h2 className="text-lg font-semibold">User Document (from Convex)</h2>
-          <pre className="text-sm whitespace-pre-wrap break-all">
-            {JSON.stringify(user, null, 2)}
-          </pre>
-        </div>
-      </div>
-
+      {/* LocalStorage情報表示セクション */}
       <div>
         <h1 className="text-2xl font-bold mb-4">Debug: LocalStorage</h1>
         <div className="space-x-2 mb-4">
