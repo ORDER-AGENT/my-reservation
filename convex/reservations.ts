@@ -3,8 +3,8 @@ import { v } from "convex/values";
 
 // 予約番号を生成するヘルパー関数 (簡易的なもの)
 function generateReservationNumber(): string {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = '';
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = "";
   for (let i = 0; i < 8; i++) {
     result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
@@ -66,7 +66,9 @@ export const createReservation = mutation({
     // `tokenIdentifier` を使って `users` テーブルからユーザーを検索
     const user = await ctx.db
       .query("users")
-      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
       .unique();
 
     if (!user) {
@@ -95,7 +97,10 @@ export const createReservation = mutation({
 
 export const getAll = query({
   handler: async (ctx) => {
-    const reservations = await ctx.db.query('reservations').order('desc').collect();
+    const reservations = await ctx.db
+      .query("reservations")
+      .order("desc")
+      .collect();
 
     const reservationsWithDetails = await Promise.all(
       reservations.map(async (reservation) => {
@@ -109,12 +114,95 @@ export const getAll = query({
         return {
           ...reservation,
           serviceName: service?.name,
-          staffName: staffUser?.name ?? 'N/A',
+          staffName: staffUser?.name ?? "N/A",
           customerName: customer?.name ?? reservation.guestName,
         };
-      })
+      }),
     );
 
     return reservationsWithDetails;
+  },
+});
+
+export const getMyReservations = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) {
+      return [];
+    }
+
+    const reservations = await ctx.db
+      .query("reservations")
+      .withIndex("by_customer_id", (q) => q.eq("customerId", user._id))
+      .order("desc")
+      .collect();
+
+    const reservationsWithDetails = await Promise.all(
+      reservations.map(async (reservation) => {
+        const service = await ctx.db.get(reservation.serviceId);
+        const staff = await ctx.db.get(reservation.staffId);
+        const staffUser = staff ? await ctx.db.get(staff.userId) : null;
+
+        return {
+          ...reservation,
+          serviceName: service?.name,
+          staffName: staffUser?.name ?? "N/A",
+          customerName: user.name, // ログインユーザーの名前をセット
+        };
+      }),
+    );
+
+    return reservationsWithDetails;
+  },
+});
+
+export const findReservationByNumberAndPhone = query({
+  args: {
+    reservationNumber: v.string(),
+    phone: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const reservation = await ctx.db
+      .query("reservations")
+      .withIndex("by_phone_and_number", (q) =>
+        q
+          .eq("guestPhone", args.phone)
+          .eq("reservationNumber", args.reservationNumber),
+      )
+      .first();
+
+    if (reservation) {
+      const service = await ctx.db.get(reservation.serviceId);
+      const staff = await ctx.db.get(reservation.staffId);
+      const staffUser = staff ? await ctx.db.get(staff.userId) : null;
+      return {
+        ...reservation,
+        serviceName: service?.name,
+        staffName: staffUser?.name ?? "N/A",
+        customerName: reservation.guestName,
+      };
+    }
+
+    return null;
+  },
+});
+
+export const cancelReservation = mutation({
+  args: {
+    reservationId: v.id("reservations"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.reservationId, { status: "canceled" });
   },
 });

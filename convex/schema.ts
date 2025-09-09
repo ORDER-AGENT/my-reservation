@@ -93,10 +93,10 @@ export default defineSchema({
     dateTime: v.number(),
     // 予約のステータス
     status: v.union(
-      v.literal("reserved"),      // 予約
-      v.literal("in-progress"),   // 対応中
-      v.literal("canceled"),      // キャンセル
-      v.literal("completed")      // 完了
+      v.literal("reserved"), // 予約
+      v.literal("in-progress"), // 対応中
+      v.literal("canceled"), // キャンセル
+      v.literal("completed"), // 完了
     ),
     // 予約時点での合計料金と所要時間
     totalPrice: v.number(),
@@ -107,7 +107,8 @@ export default defineSchema({
     .index("by_customer_id", ["customerId"])
     .index("by_staff_and_time", ["staffId", "dateTime"])
     .index("by_store_and_time", ["storeId", "dateTime"])
-    .index("by_reservation_number", ["reservationNumber"]),
+    .index("by_reservation_number", ["reservationNumber"])
+    .index("by_phone_and_number", ["guestPhone", "reservationNumber"]),
 
   // スタッフの勤務スケジュールを格納するテーブル
   schedules: defineTable({
@@ -134,7 +135,7 @@ export default defineSchema({
       ),
     ),
   }).index("by_staff_id", ["staffId"]),
-/*
+  /*
   // 口コミ情報を格納するテーブル
   reviews: defineTable({
     reservationId: v.id("reservations"),

@@ -1,43 +1,21 @@
-'use client';
+"use client";
 
-import ContentLayout from '@/components/layout/ContentLayout';
-import { useQuery } from 'convex/react';
-import { api } from '@/convex/_generated/api';
-import React from 'react';
-import { Doc } from '@/convex/_generated/dataModel';
+import ContentLayout from "@/components/layout/ContentLayout";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import React from "react";
+import { Doc } from "@/convex/_generated/dataModel";
+import { ReservationCard } from "@/components/reservation/ReservationCard";
 
-import { format } from 'date-fns';
-
-type ReservationStatus = Doc<'reservations'>['status'];
-type ReservationWithDetails = typeof api.reservations.getAll._returnType[number];
+type ReservationStatus = Doc<"reservations">["status"];
+type ReservationWithDetails =
+  (typeof api.reservations.getAll._returnType)[number];
 
 const statusMap: Record<ReservationStatus, string> = {
-  reserved: '予約',
-  'in-progress': '対応中',
-  completed: '完了',
-  canceled: 'キャンセル',
-};
-
-const ReservationCard = ({
-  reservation,
-}: {
-  reservation: ReservationWithDetails;
-}) => {
-  return (
-    <div className="bg-white p-4 rounded-md shadow-sm border">
-      <p className="font-bold text-lg mb-2">{reservation.customerName}</p>
-      <p className="text-sm text-gray-700">
-        <span className="font-semibold">サービス:</span> {reservation.serviceName}
-      </p>
-      <p className="text-sm text-gray-700">
-        <span className="font-semibold">日時:</span>{' '}
-        {format(new Date(reservation.dateTime), 'yyyy/MM/dd HH:mm')}
-      </p>
-      <p className="text-sm text-gray-700">
-        <span className="font-semibold">担当:</span> {reservation.staffName}
-      </p>
-    </div>
-  );
+  reserved: "予約",
+  "in-progress": "対応中",
+  completed: "完了",
+  canceled: "キャンセル",
 };
 
 const ReservationBoardPage = () => {
@@ -52,14 +30,14 @@ const ReservationBoardPage = () => {
       acc[status].push(reservation);
       return acc;
     },
-    {} as Record<ReservationStatus, ReservationWithDetails[]>
+    {} as Record<ReservationStatus, ReservationWithDetails[]>,
   );
 
   const statuses: ReservationStatus[] = [
-    'reserved',
-    'in-progress',
-    'completed',
-    'canceled',
+    "reserved",
+    "in-progress",
+    "completed",
+    "canceled",
   ];
 
   return (
