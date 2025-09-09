@@ -1,14 +1,15 @@
-'use client';
+"use client";
 
-import ContentLayout from '@/components/layout/ContentLayout';
-import { useAppSession } from '@/hooks/useAppSession';
-import { MyReservations } from './MyReservations';
-import { FindReservationForm } from './FindReservationForm';
-import { LoginPageLink } from './LoginPageLink';
-import { Skeleton } from '@/components/ui/skeleton';
+import ContentLayout from "@/components/layout/ContentLayout";
+import { useAppSession } from "@/hooks/useAppSession";
+import { MyReservations } from "./MyReservations";
+import { FindReservationForm } from "./FindReservationForm";
+import { LoginPageLink } from "./LoginPageLink";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const MyPage = () => {
-  const { session, isLoading } = useAppSession();
+  const { session, status } = useAppSession();
+  const isLoading = status === "loading";
 
   if (isLoading) {
     return (
@@ -21,7 +22,7 @@ const MyPage = () => {
     );
   }
 
-  const isCustomer = session?.user?.role === 'customer';
+  const isCustomer = session?.user?.role === "customer";
 
   return (
     <ContentLayout>
